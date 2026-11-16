@@ -1,0 +1,2003 @@
+<!DOCTYPE html>
+<html lang="uk">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Розумний помічник майбутнього | Електронний асистент секретаря</title>
+    <!-- Підключення Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Підключення шрифтів Inter та JetBrains Mono -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@500;700&display=swap" rel="stylesheet">
+    <!-- Іконки Lucide -->
+    <script src="https://unpkg.com/lucide@latest"></script>
+
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: {
+                        sans: ['Inter', 'sans-serif'],
+                        mono: ['JetBrains Mono', 'monospace'],
+                    }
+                }
+            }
+        }
+    </script>
+
+    <style>
+        /* Світлий пастельний фон та м'які картки */
+        body {
+            background-color: #f4f7fe;
+            background-image: 
+                radial-gradient(at 0% 0%, rgba(59, 130, 246, 0.10) 0px, transparent 48%),
+                radial-gradient(at 100% 0%, rgba(236, 72, 153, 0.10) 0px, transparent 48%),
+                radial-gradient(at 50% 100%, rgba(16, 185, 129, 0.10) 0px, transparent 52%);
+            background-attachment: fixed;
+            color: #1e293b;
+            overflow-x: hidden;
+        }
+
+        .light-panel {
+            background: rgba(255, 255, 255, 0.88);
+            backdrop-filter: blur(14px);
+            -webkit-backdrop-filter: blur(14px);
+            border: 1px solid rgba(226, 232, 240, 0.9);
+            box-shadow: 0 10px 30px -5px rgba(15, 23, 42, 0.06);
+        }
+
+        .light-card {
+            background: #ffffff;
+            border: 1px solid #e2e8f0;
+            box-shadow: 0 4px 14px -2px rgba(15, 23, 42, 0.04);
+            transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        .light-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 12px 24px -6px rgba(15, 23, 42, 0.09);
+        }
+
+        /* 3D-кнопки клавіатури у світлій темі */
+        .kbd-key {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            min-width: 2.1rem;
+            padding: 0.25rem 0.65rem;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.8rem;
+            font-weight: 700;
+            color: #1e293b;
+            background: linear-gradient(180deg, #ffffff 0%, #f1f5f9 100%);
+            border: 1px solid #cbd5e1;
+            border-bottom-width: 3px;
+            border-radius: 0.55rem;
+            box-shadow: 0 2px 4px rgba(15, 23, 42, 0.08);
+            user-select: none;
+        }
+
+        /* Кастомний скролбар */
+        ::-webkit-scrollbar {
+            width: 6px;
+            height: 6px;
+        }
+        ::-webkit-scrollbar-track {
+            background: #f1f5f9;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #cbd5e1;
+            border-radius: 9999px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: #94a3b8;
+        }
+
+        .tab-content {
+            animation: fadeInSlide 0.3s ease-out forwards;
+        }
+        @keyframes fadeInSlide {
+            from {
+                opacity: 0;
+                transform: translateY(8px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .typing-dot {
+            animation: typingPulse 1.4s infinite ease-in-out both;
+        }
+        .typing-dot:nth-child(1) { animation-delay: -0.32s; }
+        .typing-dot:nth-child(2) { animation-delay: -0.16s; }
+        @keyframes typingPulse {
+            0%, 80%, 100% { transform: scale(0.6); opacity: 0.4; }
+            40% { transform: scale(1); opacity: 1; }
+        }
+    </style>
+</head>
+<body class="min-h-screen flex flex-col antialiased selection:bg-blue-500/20 selection:text-blue-900">
+
+    <!-- Сповіщення (Toast) -->
+    <div id="toast-container" class="fixed bottom-5 right-5 z-50 flex flex-col gap-2 pointer-events-none"></div>
+
+    <!-- Шапка сайту (Header) -->
+    <header class="sticky top-0 z-40 light-panel border-b border-slate-200/80">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-3.5">
+            <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-3">
+                <!-- Логотип та назва -->
+                <div class="flex items-center gap-3.5">
+                    <div class="w-12 h-12 rounded-2xl bg-gradient-to-br from-blue-500 via-indigo-500 to-purple-600 p-0.5 shadow-lg shadow-blue-500/20 shrink-0">
+                        <div class="w-full h-full bg-white rounded-[14px] flex items-center justify-center">
+                            <i data-lucide="bot" class="w-6 h-6 text-blue-600"></i>
+                        </div>
+                    </div>
+                    <div>
+                        <div class="flex items-center gap-2 flex-wrap">
+                            <h1 class="text-lg sm:text-xl font-extrabold bg-gradient-to-r from-slate-900 via-blue-800 to-indigo-800 bg-clip-text text-transparent tracking-tight">
+                                Розумний помічник майбутнього
+                            </h1>
+                            <span class="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-bold bg-emerald-50 text-emerald-700 border border-emerald-200">
+                                <span class="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
+                                Онлайн-роздатка
+                            </span>
+                        </div>
+                        <p class="text-xs sm:text-sm text-slate-600 font-medium">
+                            Електронний асистент секретаря <span class="text-blue-500 mx-1">•</span> <span class="text-indigo-600 font-semibold">Учнівський STEM-проєкт</span>
+                        </p>
+                    </div>
+                </div>
+
+                <!-- Статус автозбереження та кнопка QR-інфо -->
+                <div class="flex items-center justify-between md:justify-end gap-2.5 pt-2 md:pt-0 border-t md:border-t-0 border-slate-200/70">
+                    <div id="storage-status" class="flex items-center gap-1.5 text-xs font-semibold text-slate-700 bg-slate-100 px-3 py-1.5 rounded-xl border border-slate-200" title="Усі ваші записи та завантажені файли зберігаються автоматично">
+                        <i data-lucide="check-circle-2" class="w-3.5 h-3.5 text-emerald-600"></i>
+                        <span id="storage-text">Дані збережено</span>
+                    </div>
+
+                    <button onclick="openProjectModal()" class="flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl text-xs font-bold bg-gradient-to-r from-indigo-500 to-blue-600 hover:from-indigo-600 hover:to-blue-700 text-white shadow-sm transition cursor-pointer">
+                        <i data-lucide="qr-code" class="w-3.5 h-3.5"></i>
+                        <span>Про проєкт</span>
+                    </button>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <!-- ========================================================= -->
+    <!-- ГОЛОВНА НАВІГАЦІЯ: 5 РІЗНОКОЛЬОРОВИХ КНОПОК                -->
+    <!-- ========================================================= -->
+    <nav class="max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 pt-5 pb-2">
+        <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3 sm:gap-3.5" role="tablist">
+            
+            <!-- 1. КАЛЕНДАР — Яскраво-синій -->
+            <button onclick="switchTab('calendar')" id="nav-calendar" class="nav-btn group relative flex flex-col sm:flex-row items-center justify-center sm:justify-start gap-3 p-3.5 rounded-2xl text-left transition-all duration-200 cursor-pointer bg-gradient-to-br from-blue-500 to-blue-600 text-white shadow-lg shadow-blue-500/30 ring-4 ring-blue-500/20">
+                <div class="w-10 h-10 rounded-xl bg-white/20 backdrop-blur-sm text-white flex items-center justify-center shrink-0 group-hover:scale-110 transition-transform">
+                    <i data-lucide="calendar-days" class="w-5 h-5"></i>
+                </div>
+                <div class="text-center sm:text-left">
+                    <div class="text-sm font-extrabold tracking-tight">Календар</div>
+                    <div class="text-[11px] text-blue-100 hidden sm:block">Планувальник тижня</div>
+                </div>
+            </button>
+
+            <!-- 2. ДОКУМЕНТИ — Соковитий смарагдовий -->
+            <button onclick="switchTab('documents')" id="nav-documents" class="nav-btn group relative flex flex-col sm:flex-row items-center justify-center sm:justify-start gap-3 p-3.5 rounded-2xl text-left transition-all duration-200 cursor-pointer bg-gradient-to-br from-emerald-500 to-teal-600 text-white shadow-md shadow-emerald-500/20 hover:shadow-lg hover:shadow-emerald-500/30 opacity-90 hover:opacity-100">
+                <div class="w-10 h-10 rounded-xl bg-white/20 backdrop-blur-sm text-white flex items-center justify-center shrink-0 group-hover:scale-110 transition-transform">
+                    <i data-lucide="file-text" class="w-5 h-5"></i>
+                </div>
+                <div class="text-center sm:text-left">
+                    <div class="text-sm font-extrabold tracking-tight">Документи</div>
+                    <div class="text-[11px] text-emerald-100 hidden sm:block">Зразки та мої файли</div>
+                </div>
+            </button>
+
+            <!-- 3. ГАРЯЧІ КЛАВІШІ — Яскравий помаранчевий / бурштиновий -->
+            <button onclick="switchTab('hotkeys')" id="nav-hotkeys" class="nav-btn group relative flex flex-col sm:flex-row items-center justify-center sm:justify-start gap-3 p-3.5 rounded-2xl text-left transition-all duration-200 cursor-pointer bg-gradient-to-br from-amber-500 to-orange-600 text-white shadow-md shadow-orange-500/20 hover:shadow-lg hover:shadow-orange-500/30 opacity-90 hover:opacity-100">
+                <div class="w-10 h-10 rounded-xl bg-white/20 backdrop-blur-sm text-white flex items-center justify-center shrink-0 group-hover:scale-110 transition-transform">
+                    <i data-lucide="keyboard" class="w-5 h-5"></i>
+                </div>
+                <div class="text-center sm:text-left">
+                    <div class="text-sm font-extrabold tracking-tight">Гарячі клавіші</div>
+                    <div class="text-[11px] text-amber-100 hidden sm:block">Word, Excel, Windows</div>
+                </div>
+            </button>
+
+            <!-- 4. ЧЕК-ЛИСТ — Насичений фіолетовий -->
+            <button onclick="switchTab('checklist')" id="nav-checklist" class="nav-btn group relative flex flex-col sm:flex-row items-center justify-center sm:justify-start gap-3 p-3.5 rounded-2xl text-left transition-all duration-200 cursor-pointer bg-gradient-to-br from-violet-500 to-purple-600 text-white shadow-md shadow-purple-500/20 hover:shadow-lg hover:shadow-purple-500/30 opacity-90 hover:opacity-100">
+                <div class="w-10 h-10 rounded-xl bg-white/20 backdrop-blur-sm text-white flex items-center justify-center shrink-0 group-hover:scale-110 transition-transform">
+                    <i data-lucide="check-square" class="w-5 h-5"></i>
+                </div>
+                <div class="text-center sm:text-left">
+                    <div class="text-sm font-extrabold tracking-tight">Чек-лист</div>
+                    <div class="text-[11px] text-purple-100 hidden sm:block">Етикет та кличний</div>
+                </div>
+            </button>
+
+            <!-- 5. AI-ПОМІЧНИК — Яскравий рожево-малиновий -->
+            <button onclick="switchTab('ai')" id="nav-ai" class="nav-btn col-span-2 sm:col-span-1 group relative flex flex-row items-center justify-center sm:justify-start gap-3 p-3.5 rounded-2xl text-left transition-all duration-200 cursor-pointer bg-gradient-to-br from-pink-500 to-rose-600 text-white shadow-md shadow-rose-500/20 hover:shadow-lg hover:shadow-rose-500/30 opacity-90 hover:opacity-100">
+                <div class="w-10 h-10 rounded-xl bg-white/20 backdrop-blur-sm text-white flex items-center justify-center shrink-0 group-hover:scale-110 transition-transform">
+                    <i data-lucide="sparkles" class="w-5 h-5"></i>
+                </div>
+                <div>
+                    <div class="text-sm font-extrabold tracking-tight flex items-center gap-1.5">
+                        AI-помічник
+                        <span class="text-[10px] px-1.5 py-0.2 bg-white/25 text-white rounded-md font-bold">ШІ</span>
+                    </div>
+                    <div class="text-[11px] text-pink-100">Нейромережа 24/7</div>
+                </div>
+            </button>
+        </div>
+    </nav>
+
+    <!-- Основний робочий контейнер -->
+    <main class="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-4">
+
+        <!-- ========================================================= -->
+        <!-- РОЗДІЛ 1: КАЛЕНДАР (ПЛАНУВАЛЬНИК ТИЖНЯ — СИНІЙ АКЦЕНТ)    -->
+        <!-- ========================================================= -->
+        <section id="section-calendar" class="tab-content space-y-5">
+            <div class="light-panel rounded-3xl p-5 sm:p-6 border-t-4 border-t-blue-500">
+                <div class="flex flex-col lg:flex-row lg:items-center justify-between gap-4 mb-5">
+                    <div>
+                        <h2 class="text-xl sm:text-2xl font-extrabold text-slate-900 flex items-center gap-2.5">
+                            <span class="p-2 rounded-xl bg-blue-100 text-blue-600">
+                                <i data-lucide="calendar-clock" class="w-6 h-6"></i>
+                            </span>
+                            Робочий тиждень секретаря
+                        </h2>
+                        <p class="text-sm text-slate-600 mt-1">Вносьте зустрічі, онлайн-наради та термінові роботи. Усі записи зберігаються автоматично.</p>
+                    </div>
+                    <div class="flex flex-wrap items-center gap-2">
+                        <span id="calendar-stats" class="text-xs font-bold px-3.5 py-2 rounded-xl bg-blue-50 text-blue-700 border border-blue-200">
+                            Виконано: 0 з 0
+                        </span>
+                        <button onclick="resetCalendarDefaults()" class="text-xs font-semibold px-3 py-2 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 border border-slate-200 transition flex items-center gap-1.5 cursor-pointer">
+                            <i data-lucide="rotate-ccw" class="w-3.5 h-3.5"></i>
+                            Демо-розклад
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Форма додавання нової події -->
+                <form id="calendar-form" onsubmit="addCalendarEvent(event)" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-12 gap-3 bg-blue-50/60 p-4 rounded-2xl border border-blue-100">
+                    <div class="lg:col-span-4">
+                        <label class="block text-xs font-bold text-slate-700 mb-1">Назва події або завдання *</label>
+                        <input type="text" id="event-title" required placeholder="Напр.: Онлайн-нарада у Zoom" class="w-full px-3.5 py-2.5 rounded-xl bg-white border border-slate-300 text-sm text-slate-900 placeholder-slate-400 focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 transition">
+                    </div>
+
+                    <div class="lg:col-span-2">
+                        <label class="block text-xs font-bold text-slate-700 mb-1">День тижня</label>
+                        <select id="event-day" class="w-full px-3 py-2.5 rounded-xl bg-white border border-slate-300 text-sm text-slate-800 focus:outline-none focus:border-blue-500 transition">
+                            <option value="Понеділок">Понеділок</option>
+                            <option value="Вівторок">Вівторок</option>
+                            <option value="Середа">Середа</option>
+                            <option value="Четвер">Четвер</option>
+                            <option value="П'ятниця">П'ятниця</option>
+                            <option value="Субота">Субота</option>
+                        </select>
+                    </div>
+
+                    <div class="lg:col-span-2">
+                        <label class="block text-xs font-bold text-slate-700 mb-1">Час</label>
+                        <input type="time" id="event-time" value="10:00" required class="w-full px-3 py-2.5 rounded-xl bg-white border border-slate-300 text-sm text-slate-800 focus:outline-none focus:border-blue-500 transition">
+                    </div>
+
+                    <div class="lg:col-span-2">
+                        <label class="block text-xs font-bold text-slate-700 mb-1">Тип події</label>
+                        <select id="event-category" class="w-full px-3 py-2.5 rounded-xl bg-white border border-slate-300 text-sm text-slate-800 focus:outline-none focus:border-blue-500 transition">
+                            <option value="urgent">🔥 Термінова робота</option>
+                            <option value="online">💻 Онлайн-захід</option>
+                            <option value="meeting">🤝 Зустріч / Нарада</option>
+                            <option value="docs">📄 Документообіг</option>
+                        </select>
+                    </div>
+
+                    <div class="lg:col-span-2 flex items-end">
+                        <button type="submit" class="w-full py-2.5 px-4 rounded-xl bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white font-bold text-sm shadow-md shadow-blue-500/25 transition flex items-center justify-center gap-1.5 cursor-pointer">
+                            <i data-lucide="plus-circle" class="w-4 h-4"></i>
+                            <span>Додати</span>
+                        </button>
+                    </div>
+                </form>
+
+                <!-- Фільтр за категоріями -->
+                <div class="flex flex-wrap items-center gap-2 mt-4">
+                    <span class="text-xs font-bold text-slate-500 mr-1">Показати:</span>
+                    <button onclick="setCalendarFilter('all')" data-cal-filter="all" class="cal-filter-btn px-3 py-1.5 rounded-xl text-xs font-bold bg-blue-600 text-white shadow-sm cursor-pointer">Усі події</button>
+                    <button onclick="setCalendarFilter('urgent')" data-cal-filter="urgent" class="cal-filter-btn px-3 py-1.5 rounded-xl text-xs font-semibold bg-white text-slate-700 border border-slate-200 hover:border-rose-300 cursor-pointer">🔥 Термінові</button>
+                    <button onclick="setCalendarFilter('online')" data-cal-filter="online" class="cal-filter-btn px-3 py-1.5 rounded-xl text-xs font-semibold bg-white text-slate-700 border border-slate-200 hover:border-sky-300 cursor-pointer">💻 Онлайн</button>
+                    <button onclick="setCalendarFilter('meeting')" data-cal-filter="meeting" class="cal-filter-btn px-3 py-1.5 rounded-xl text-xs font-semibold bg-white text-slate-700 border border-slate-200 hover:border-indigo-300 cursor-pointer">🤝 Зустрічі</button>
+                    <button onclick="setCalendarFilter('docs')" data-cal-filter="docs" class="cal-filter-btn px-3 py-1.5 rounded-xl text-xs font-semibold bg-white text-slate-700 border border-slate-200 hover:border-amber-300 cursor-pointer">📄 Документи</button>
+                </div>
+            </div>
+
+            <!-- Сітка днів тижня -->
+            <div id="calendar-grid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                <!-- Генерується динамічно через JS -->
+            </div>
+        </section>
+
+        <!-- ========================================================= -->
+        <!-- РОЗДІЛ 2: ДОКУМЕНТИ + ЗАВАНТАЖЕННЯ СВОЇХ ФАЙЛІВ (ЗЕЛЕНИЙ)  -->
+        <!-- ========================================================= -->
+        <section id="section-documents" class="tab-content hidden space-y-5">
+            <div class="light-panel rounded-3xl p-5 sm:p-6 border-t-4 border-t-emerald-500">
+                <div class="flex flex-col lg:flex-row lg:items-center justify-between gap-4 mb-5">
+                    <div>
+                        <h2 class="text-xl sm:text-2xl font-extrabold text-slate-900 flex items-center gap-2.5">
+                            <span class="p-2 rounded-xl bg-emerald-100 text-emerald-600">
+                                <i data-lucide="folder-check" class="w-6 h-6"></i>
+                            </span>
+                            Документи та власний архів секретаря
+                        </h2>
+                        <p class="text-sm text-slate-600 mt-1">Офіційні зразки за <span class="text-emerald-700 font-bold">ДСТУ 4163:2020</span> та можливість завантажувати власні робочі файли.</p>
+                    </div>
+
+                    <!-- Кнопки завантаження та створення нового документа -->
+                    <div class="flex flex-wrap items-center gap-2.5">
+                        <input type="file" id="file-upload-input" class="hidden" accept=".txt,.doc,.docx,.pdf,.xls,.xlsx,.rtf,.odt,.jpg,.jpeg,.png" onchange="handleFileUpload(event)">
+                        
+                        <button onclick="document.getElementById('file-upload-input').click()" class="px-4 py-2.5 rounded-xl text-xs sm:text-sm font-bold bg-gradient-to-r from-emerald-500 to-teal-600 hover:from-emerald-600 hover:to-teal-700 text-white shadow-md shadow-emerald-500/25 transition flex items-center gap-2 cursor-pointer">
+                            <i data-lucide="upload-cloud" class="w-4 h-4"></i>
+                            <span>+ Завантажити документ</span>
+                        </button>
+
+                        <button onclick="createNewCustomDoc()" class="px-3.5 py-2.5 rounded-xl text-xs sm:text-sm font-bold bg-emerald-50 hover:bg-emerald-100 text-emerald-800 border border-emerald-200 transition flex items-center gap-1.5 cursor-pointer">
+                            <i data-lucide="file-plus-2" class="w-4 h-4"></i>
+                            <span>Новий шаблон</span>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Категорії документів -->
+                <div id="doc-categories" class="flex flex-wrap gap-2 pb-4 border-b border-slate-200">
+                    <!-- Генеруються JS -->
+                </div>
+
+                <!-- Робоча зона: Список документів зліва + Перегляд/Редактор справа -->
+                <div class="grid grid-cols-1 lg:grid-cols-12 gap-5 mt-5">
+                    <!-- Список документів -->
+                    <div class="lg:col-span-4 space-y-2.5 max-h-[540px] overflow-y-auto pr-1" id="doc-list">
+                        <!-- Генерується JS -->
+                    </div>
+
+                    <!-- Вікно перегляду та редагування -->
+                    <div class="lg:col-span-8 flex flex-col bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
+                        <div class="flex flex-wrap items-center justify-between gap-2 px-4 py-3 bg-slate-50 border-b border-slate-200">
+                            <div class="flex items-center gap-2 min-w-0">
+                                <span class="w-2.5 h-2.5 rounded-full bg-emerald-500 shrink-0"></span>
+                                <span id="current-doc-title" class="text-xs sm:text-sm font-bold text-slate-800 truncate">Оберіть документ</span>
+                            </div>
+                            <div class="flex items-center gap-2 flex-wrap" id="doc-toolbar-actions">
+                                <!-- Кнопки дій генеруються динамічно залежно від типу документа -->
+                            </div>
+                        </div>
+
+                        <!-- Підказка або інформація про завантажений файл -->
+                        <div id="doc-hint-bar" class="px-4 py-2.5 bg-emerald-50/80 border-b border-emerald-100 text-xs text-emerald-900 flex items-center gap-2">
+                            <i data-lucide="info" class="w-4 h-4 text-emerald-600 shrink-0"></i>
+                            <span id="doc-hint-text">Редагуйте текст документа нижче — усі зміни зберігаються автоматично.</span>
+                        </div>
+
+                        <!-- Контейнер для текстового редактора АБО картки завантаженого офісного файлу -->
+                        <div id="doc-workspace-body" class="p-4 sm:p-5 bg-slate-50/50 flex-1 flex flex-col">
+                            <textarea id="doc-editor" rows="16" oninput="saveEditedDocument()" class="w-full h-full min-h-[380px] p-4 sm:p-6 rounded-xl bg-white text-slate-900 font-mono text-xs sm:text-sm leading-relaxed border border-slate-300 focus:outline-none focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20 resize-y shadow-inner" spellcheck="false"></textarea>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- ========================================================= -->
+        <!-- РОЗДІЛ 3: ГАРЯЧІ КЛАВІШІ (ПОМАРАНЧЕВИЙ АКЦЕНТ)            -->
+        <!-- ========================================================= -->
+        <section id="section-hotkeys" class="tab-content hidden space-y-5">
+            <div class="light-panel rounded-3xl p-5 sm:p-6 border-t-4 border-t-orange-500">
+                <div class="flex flex-col lg:flex-row lg:items-center justify-between gap-4 mb-5">
+                    <div>
+                        <h2 class="text-xl sm:text-2xl font-extrabold text-slate-900 flex items-center gap-2.5">
+                            <span class="p-2 rounded-xl bg-amber-100 text-orange-600">
+                                <i data-lucide="zap" class="w-6 h-6"></i>
+                            </span>
+                            Швидка шпаргалка гарячих клавіш
+                        </h2>
+                        <p class="text-sm text-slate-600 mt-1">Економте до 30% робочого часу. Натискайте зірочку ⭐, щоб додати комбінацію у свій набір.</p>
+                    </div>
+
+                    <!-- Пошук -->
+                    <div class="relative w-full lg:w-80">
+                        <i data-lucide="search" class="w-4 h-4 text-slate-400 absolute left-3.5 top-1/2 -translate-y-1/2"></i>
+                        <input type="text" id="hotkey-search" oninput="renderHotkeys()" placeholder="Пошук дії (копіювати, дата, F2)..." class="w-full pl-10 pr-4 py-2.5 rounded-xl bg-white border border-slate-300 text-sm text-slate-900 placeholder-slate-400 focus:outline-none focus:border-orange-500 focus:ring-2 focus:ring-orange-500/20 transition">
+                    </div>
+                </div>
+
+                <!-- Вкладки програм -->
+                <div class="flex flex-wrap gap-2 pb-4 border-b border-slate-200" id="hotkey-tabs">
+                    <button onclick="setHotkeyProgram('all')" data-hk-prog="all" class="hk-tab-btn px-3.5 py-2 rounded-xl text-xs font-bold bg-orange-500 text-white shadow-sm cursor-pointer">Усі програми</button>
+                    <button onclick="setHotkeyProgram('favorites')" data-hk-prog="favorites" class="hk-tab-btn px-3.5 py-2 rounded-xl text-xs font-bold bg-amber-50 text-amber-800 border border-amber-200 hover:bg-amber-100 cursor-pointer flex items-center gap-1.5">
+                        <span>⭐ Обрані</span>
+                        <span id="fav-count-badge" class="px-1.5 py-0.2 bg-amber-200/80 rounded-md text-[11px]">0</span>
+                    </button>
+                    <button onclick="setHotkeyProgram('Windows / Базові')" data-hk-prog="Windows / Базові" class="hk-tab-btn px-3.5 py-2 rounded-xl text-xs font-semibold bg-white text-slate-700 border border-slate-200 hover:border-orange-300 cursor-pointer">🪟 Windows / Базові</button>
+                    <button onclick="setHotkeyProgram('MS Word')" data-hk-prog="MS Word" class="hk-tab-btn px-3.5 py-2 rounded-xl text-xs font-semibold bg-white text-slate-700 border border-slate-200 hover:border-orange-300 cursor-pointer">📘 MS Word</button>
+                    <button onclick="setHotkeyProgram('MS Excel')" data-hk-prog="MS Excel" class="hk-tab-btn px-3.5 py-2 rounded-xl text-xs font-semibold bg-white text-slate-700 border border-slate-200 hover:border-orange-300 cursor-pointer">📗 MS Excel</button>
+                    <button onclick="setHotkeyProgram('Браузер та Google Документи')" data-hk-prog="Браузер та Google Документи" class="hk-tab-btn px-3.5 py-2 rounded-xl text-xs font-semibold bg-white text-slate-700 border border-slate-200 hover:border-orange-300 cursor-pointer">🌐 Браузер та Google Документи</button>
+                </div>
+
+                <!-- Сітка карток -->
+                <div id="hotkeys-grid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3.5 mt-5">
+                    <!-- Генерується JS -->
+                </div>
+            </div>
+        </section>
+
+        <!-- ========================================================= -->
+        <!-- РОЗДІЛ 4: ЧЕК-ЛИСТ ТА КЛИЧНИЙ ВІДМІНОК (ФІОЛЕТОВИЙ)       -->
+        <!-- ========================================================= -->
+        <section id="section-checklist" class="tab-content hidden space-y-5">
+            <div class="grid grid-cols-1 lg:grid-cols-12 gap-5">
+                
+                <!-- БЛОК А: Інтерактивний чек-лист -->
+                <div class="lg:col-span-6 light-panel rounded-3xl p-5 sm:p-6 border-t-4 border-t-violet-500 flex flex-col justify-between">
+                    <div>
+                        <div class="flex items-start justify-between gap-3 mb-3">
+                            <div>
+                                <span class="text-xs font-extrabold uppercase tracking-wider text-violet-600">Блок А • Контроль якості</span>
+                                <h2 class="text-xl font-extrabold text-slate-900 mt-0.5 flex items-center gap-2">
+                                    <i data-lucide="list-checks" class="w-5 h-5 text-violet-600"></i>
+                                    Чек-лист оформлення документа
+                                </h2>
+                            </div>
+                            <button onclick="resetChecklist()" class="text-xs font-semibold px-3 py-1.5 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 border border-slate-200 transition cursor-pointer">
+                                Очистити
+                            </button>
+                        </div>
+                        <p class="text-xs sm:text-sm text-slate-600 mb-4">Перевірте реквізити документа перед подачею на підпис керівнику:</p>
+
+                        <!-- Прогрес-бар -->
+                        <div class="bg-violet-50/80 p-3.5 rounded-2xl border border-violet-100 mb-4">
+                            <div class="flex justify-between items-center text-xs font-bold mb-1.5">
+                                <span class="text-slate-700">Готовність документа:</span>
+                                <span id="checklist-percent" class="text-violet-700 font-extrabold">0%</span>
+                            </div>
+                            <div class="w-full h-2.5 bg-violet-200/70 rounded-full overflow-hidden">
+                                <div id="checklist-progress-bar" class="h-full bg-gradient-to-r from-violet-500 to-purple-600 transition-all duration-300 rounded-full" style="width: 0%"></div>
+                            </div>
+                            <p id="checklist-status-msg" class="text-[11px] text-slate-600 mt-1.5">Відмічайте виконані пункти нижче.</p>
+                        </div>
+
+                        <!-- Список пунктів -->
+                        <div id="checklist-items" class="space-y-2.5">
+                            <!-- Генерується JS -->
+                        </div>
+                    </div>
+                </div>
+
+                <!-- БЛОК Б: Кличний відмінок та мовний етикет -->
+                <div class="lg:col-span-6 light-panel rounded-3xl p-5 sm:p-6 border-t-4 border-t-purple-500 space-y-5">
+                    <div>
+                        <span class="text-xs font-extrabold uppercase tracking-wider text-purple-600">Блок Б • Культура ділового мовлення</span>
+                        <h2 class="text-xl font-extrabold text-slate-900 mt-0.5 flex items-center gap-2">
+                            <i data-lucide="languages" class="w-5 h-5 text-purple-600"></i>
+                            Кличний відмінок у звертаннях
+                        </h2>
+                        <p class="text-xs sm:text-sm text-slate-600 mt-1">У ділових листах, заявах-запрошеннях і промовах звертання вживаються виключно у <strong class="text-purple-700">кличному відмінку</strong>.</p>
+                    </div>
+
+                    <!-- Конструктор звертань -->
+                    <div class="bg-gradient-to-br from-purple-50 to-indigo-50 p-4 rounded-2xl border border-purple-200/80 space-y-3">
+                        <div class="flex items-center gap-2 text-sm font-extrabold text-purple-900">
+                            <i data-lucide="wand-2" class="w-4 h-4 text-purple-600"></i>
+                            <span>Інтерактивний помічник звертань</span>
+                        </div>
+                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
+                            <div>
+                                <label class="block text-[11px] font-bold text-slate-700 mb-1">Введіть ім'я (Називний відм.):</label>
+                                <input type="text" id="vocative-input" oninput="generateVocativeHint()" placeholder="Напр.: Ігор, Олена, Сергій..." class="w-full px-3 py-2 rounded-xl bg-white border border-purple-200 text-sm text-slate-900 placeholder-slate-400 focus:outline-none focus:border-purple-500">
+                            </div>
+                            <div>
+                                <label class="block text-[11px] font-bold text-slate-700 mb-1">Швидкі приклади:</label>
+                                <select onchange="selectVocativeSample(this.value)" class="w-full px-3 py-2 rounded-xl bg-white border border-purple-200 text-sm text-slate-800 focus:outline-none focus:border-purple-500">
+                                    <option value="">-- Оберіть приклад --</option>
+                                    <option value="Ігор">Ігор (чол.)</option>
+                                    <option value="Олена">Олена (жін.)</option>
+                                    <option value="Олександр Петрович">Олександр Петрович</option>
+                                    <option value="Наталія Іванівна">Наталія Іванівна</option>
+                                    <option value="Валерій Анатолійович">Валерій Анатолійович</option>
+                                    <option value="Сергій Васильович">Сергій Васильович</option>
+                                    <option value="Директор">Пан директор</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div id="vocative-result" class="p-3 rounded-xl bg-white border border-purple-200 text-sm text-slate-700 flex items-center justify-between gap-2 shadow-xs">
+                            <span>Введіть ім'я вище, щоб побачити правильну форму звертання.</span>
+                        </div>
+                    </div>
+
+                    <!-- Таблиця-шпаргалка -->
+                    <div>
+                        <h3 class="text-sm font-extrabold text-slate-800 mb-2.5 flex items-center gap-2">
+                            <i data-lucide="book-open-check" class="w-4 h-4 text-emerald-600"></i>
+                            Як писати правильно:
+                        </h3>
+                        <div class="overflow-hidden rounded-2xl border border-slate-200 bg-white">
+                            <table class="w-full text-left border-collapse text-xs sm:text-sm">
+                                <thead>
+                                    <tr class="bg-slate-100 text-slate-700 border-b border-slate-200">
+                                        <th class="py-2.5 px-3 font-bold text-rose-600">❌ Помилково</th>
+                                        <th class="py-2.5 px-3 font-bold text-emerald-700">✅ Правильно (Кличний відм.)</th>
+                                    </tr>
+                                </thead>
+                                <tbody class="divide-y divide-slate-100">
+                                    <tr>
+                                        <td class="py-2 px-3 text-slate-400 line-through">Шановний пан Ігор!</td>
+                                        <td class="py-2 px-3 text-emerald-800 font-bold">Шановний пане Ігоре!</td>
+                                    </tr>
+                                    <tr>
+                                        <td class="py-2 px-3 text-slate-400 line-through">Шановна пані Олена!</td>
+                                        <td class="py-2 px-3 text-emerald-800 font-bold">Шановна пані Олено!</td>
+                                    </tr>
+                                    <tr>
+                                        <td class="py-2 px-3 text-slate-400 line-through">Шановний Олександр Петрович!</td>
+                                        <td class="py-2 px-3 text-emerald-800 font-bold">Шановний Олександре Петровичу!</td>
+                                    </tr>
+                                    <tr>
+                                        <td class="py-2 px-3 text-slate-400 line-through">Шановна Наталія Іванівна!</td>
+                                        <td class="py-2 px-3 text-emerald-800 font-bold">Шановна Наталіє Іванівно!</td>
+                                    </tr>
+                                    <tr>
+                                        <td class="py-2 px-3 text-slate-400 line-through">Вельмишановний Валерій Анатолійович!</td>
+                                        <td class="py-2 px-3 text-emerald-800 font-bold">Вельмишановний Валерію Анатолійовичу!</td>
+                                    </tr>
+                                    <tr>
+                                        <td class="py-2 px-3 text-slate-400 line-through">Пан директор / Пані секретар</td>
+                                        <td class="py-2 px-3 text-emerald-800 font-bold">Пане директоре! Пані секретарко!</td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- ========================================================= -->
+        <!-- РОЗДІЛ 5: AI-ПОМІЧНИК (РОЖЕВО-МАЛИНОВИЙ АКЦЕНТ)           -->
+        <!-- ========================================================= -->
+        <section id="section-ai" class="tab-content hidden">
+            <div class="light-panel rounded-3xl p-4 sm:p-6 border-t-4 border-t-pink-500 flex flex-col h-[74vh] min-h-[540px] max-h-[780px]">
+                <!-- Заголовок AI-чату -->
+                <div class="flex flex-wrap items-center justify-between gap-3 pb-3.5 border-b border-slate-200">
+                    <div class="flex items-center gap-3">
+                        <div class="w-11 h-11 rounded-2xl bg-gradient-to-br from-pink-500 to-rose-600 flex items-center justify-center text-white shadow-md shadow-pink-500/25">
+                            <i data-lucide="sparkles" class="w-5 h-5"></i>
+                        </div>
+                        <div>
+                            <h2 class="text-lg sm:text-xl font-extrabold text-slate-900 flex items-center gap-2">
+                                AI-асистент секретаря
+                                <span class="text-[11px] font-bold px-2.5 py-0.5 rounded-full bg-pink-100 text-pink-700 border border-pink-200">Gemini AI</span>
+                            </h2>
+                            <p class="text-xs text-slate-600">Миттєвий помічник із діловодства, ДСТУ 4163:2020, листів та кличного відмінка</p>
+                        </div>
+                    </div>
+
+                    <button onclick="clearAiChat()" class="px-3 py-1.5 rounded-xl text-xs font-semibold bg-slate-100 hover:bg-rose-50 hover:text-rose-700 hover:border-rose-200 text-slate-700 border border-slate-200 transition flex items-center gap-1.5 cursor-pointer">
+                        <i data-lucide="trash-2" class="w-3.5 h-3.5"></i>
+                        <span>Очистити чат</span>
+                    </button>
+                </div>
+
+                <!-- Стрічка повідомлень -->
+                <div id="ai-messages" class="flex-1 overflow-y-auto py-4 px-1 sm:px-2 space-y-4">
+                    <!-- Повідомлення генеруються JS -->
+                </div>
+
+                <!-- Швидкі підказки -->
+                <div class="pt-2.5 pb-2 border-t border-slate-200">
+                    <div class="text-[11px] font-bold text-slate-500 mb-1.5 flex items-center gap-1">
+                        <i data-lucide="zap" class="w-3.5 h-3.5 text-amber-500"></i>
+                        <span>Швидкі запитання (натисніть, щоб запитати):</span>
+                    </div>
+                    <div class="flex gap-2 overflow-x-auto pb-1.5">
+                        <button onclick="sendQuickPrompt('Як правильно оформити наказ про прийняття на роботу за ДСТУ 4163:2020?')" class="shrink-0 px-3 py-1.5 rounded-xl text-xs font-semibold bg-pink-50 hover:bg-pink-100 text-pink-800 border border-pink-200 transition cursor-pointer">
+                            📄 Наказ про прийняття на роботу
+                        </button>
+                        <button onclick="sendQuickPrompt('Склади ввічливий діловий лист-запрошення на STEM-конференцію.')" class="shrink-0 px-3 py-1.5 rounded-xl text-xs font-semibold bg-blue-50 hover:bg-blue-100 text-blue-800 border border-blue-200 transition cursor-pointer">
+                            ✉️ Лист-запрошення на захід
+                        </button>
+                        <button onclick="sendQuickPrompt('Як правильно звернутися у листі до директора Сергія Васильовича та заступниці Олени Ігорівни?')" class="shrink-0 px-3 py-1.5 rounded-xl text-xs font-semibold bg-purple-50 hover:bg-purple-100 text-purple-800 border border-purple-200 transition cursor-pointer">
+                            🗣️ Кличний відмінок у звертанні
+                        </button>
+                        <button onclick="sendQuickPrompt('Які обов’язкові реквізити має протокол засідання?')" class="shrink-0 px-3 py-1.5 rounded-xl text-xs font-semibold bg-emerald-50 hover:bg-emerald-100 text-emerald-800 border border-emerald-200 transition cursor-pointer">
+                            📋 Обов'язкові реквізити протоколу
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Поле вводу -->
+                <form onsubmit="handleAiSubmit(event)" class="flex items-center gap-2 pt-1">
+                    <input type="text" id="ai-input" placeholder="Напишіть запитання ШІ-асистенту (напр.: Склади текст заяви на відпустку)..." class="flex-1 px-4 py-3 rounded-2xl bg-white border border-slate-300 text-sm text-slate-900 placeholder-slate-400 focus:outline-none focus:border-pink-500 focus:ring-2 focus:ring-pink-500/20 transition">
+                    <button type="submit" id="ai-send-btn" class="px-5 py-3 rounded-2xl bg-gradient-to-r from-pink-500 to-rose-600 hover:from-pink-600 hover:to-rose-700 text-white font-bold text-sm shadow-md shadow-pink-500/25 transition flex items-center gap-2 cursor-pointer shrink-0">
+                        <span class="hidden sm:inline">Надіслати</span>
+                        <i data-lucide="send" class="w-4 h-4"></i>
+                    </button>
+                </form>
+            </div>
+        </section>
+
+    </main>
+
+    <!-- Підвал (Footer) -->
+    <footer class="max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-4 mt-4 border-t border-slate-200">
+        <div class="flex flex-col sm:flex-row items-center justify-between gap-3 text-xs text-slate-600">
+            <div class="flex items-center gap-2 text-center sm:text-left">
+                <span class="px-2.5 py-0.5 rounded-md bg-blue-100 text-blue-700 font-bold">STEM-проєкт</span>
+                <span class="font-medium">«Розумний помічник майбутнього: Електронний асистент секретаря»</span>
+            </div>
+            <div class="flex items-center gap-3">
+                <button onclick="openProjectModal()" class="text-indigo-600 hover:text-indigo-800 font-semibold underline underline-offset-4 cursor-pointer">
+                    Інструкція для QR-буклету
+                </button>
+                <span>•</span>
+                <button onclick="exportAllData()" class="text-emerald-700 hover:text-emerald-900 font-semibold flex items-center gap-1 cursor-pointer">
+                    <i data-lucide="download" class="w-3.5 h-3.5"></i>
+                    <span>Експорт даних</span>
+                </button>
+            </div>
+        </div>
+    </footer>
+
+    <!-- Модальне вікно: Про STEM-проєкт -->
+    <div id="project-modal" class="fixed inset-0 z-50 hidden items-center justify-center p-4 bg-slate-900/50 backdrop-blur-xs">
+        <div class="bg-white max-w-lg w-full rounded-3xl p-6 border border-slate-200 shadow-2xl space-y-4 animate-[fadeInSlide_0.25s_ease-out]">
+            <div class="flex items-start justify-between gap-3">
+                <div class="flex items-center gap-3">
+                    <div class="w-11 h-11 rounded-2xl bg-gradient-to-br from-blue-500 to-indigo-600 flex items-center justify-center text-white shadow-md">
+                        <i data-lucide="award" class="w-6 h-6"></i>
+                    </div>
+                    <div>
+                        <h3 class="text-lg font-extrabold text-slate-900">Про учнівський STEM-проєкт</h3>
+                        <p class="text-xs font-semibold text-blue-600">Інтерактивний роздатковий матеріал (QR-буклет)</p>
+                    </div>
+                </div>
+                <button onclick="closeProjectModal()" class="p-1.5 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-600 cursor-pointer">
+                    <i data-lucide="x" class="w-5 h-5"></i>
+                </button>
+            </div>
+
+            <div class="space-y-3 text-sm text-slate-600 leading-relaxed">
+                <p>
+                    <strong class="text-slate-900">«Розумний помічник майбутнього»</strong> — це цифровий робочий простір сучасного секретаря, створений для швидкої та зручної роботи з документами.
+                </p>
+                <div class="bg-slate-50 p-3.5 rounded-2xl border border-slate-200 space-y-2 text-xs">
+                    <div class="font-extrabold text-slate-800 uppercase tracking-wider">5 яскравих модулів помічника:</div>
+                    <ul class="space-y-1.5 text-slate-700 list-disc list-inside">
+                        <li><strong class="text-blue-600">Календар:</strong> планування тижня, нарад та термінових робіт.</li>
+                        <li><strong class="text-emerald-600">Документи:</strong> готові зразки за <em>ДСТУ 4163:2020</em> + завантаження власних файлів.</li>
+                        <li><strong class="text-orange-600">Гарячі клавіші:</strong> швидкі комбінації для Word, Excel та Windows.</li>
+                        <li><strong class="text-purple-600">Чек-лист:</strong> перевірка оформлення документів та кличний відмінок.</li>
+                        <li><strong class="text-pink-600">AI-помічник:</strong> миттєві консультації нейромережі 24/7.</li>
+                    </ul>
+                </div>
+                <p class="text-xs text-slate-500 flex items-center gap-1.5">
+                    <i data-lucide="shield-check" class="w-4 h-4 text-emerald-600 shrink-0"></i>
+                    <span>Усі ваші записи та завантажені документи автоматично зберігаються у пам'яті браузера.</span>
+                </p>
+            </div>
+
+            <div class="flex justify-end gap-2 pt-2">
+                <button onclick="closeProjectModal()" class="px-5 py-2.5 rounded-xl bg-gradient-to-r from-blue-600 to-indigo-600 text-white font-bold text-sm shadow-md cursor-pointer">
+                    Чудово, працюємо!
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- ========================================================= -->
+    <!-- JAVASCRIPT ЛОГІКА ДОДАТКУ                                 -->
+    <!-- ========================================================= -->
+    <script>
+        // ---------------------------------------------------------
+        // 1. БАЗОВІ ДАНІ ТА КОНСТАНТИ LOCALSTORAGE
+        // ---------------------------------------------------------
+        const STORAGE_KEYS = {
+            CALENDAR: 'stem_secretary_calendar_v2',
+            DOCS_EDITED: 'stem_secretary_docs_v2',
+            CUSTOM_DOCS: 'stem_secretary_custom_docs_v2',
+            HOTKEYS_FAV: 'stem_secretary_hotkeys_fav_v2',
+            CHECKLIST: 'stem_secretary_checklist_v2',
+            AI_CHAT: 'stem_secretary_ai_chat_v2'
+        };
+
+        const DEFAULT_EVENTS = [
+            { id: 'ev-1', title: 'Онлайн-нарада з керівництвом (Zoom)', day: 'Понеділок', time: '09:30', category: 'online', completed: false },
+            { id: 'ev-2', title: 'Терміново: підготувати наказ про відрядження', day: 'Понеділок', time: '11:15', category: 'urgent', completed: false },
+            { id: 'ev-3', title: 'Прийом відвідувачів та реєстрація вхідної пошти', day: 'Вівторок', time: '10:00', category: 'meeting', completed: true },
+            { id: 'ev-4', title: 'Оформлення протоколу засідання комісії', day: 'Середа', time: '14:00', category: 'docs', completed: false },
+            { id: 'ev-5', title: 'Презентація STEM-проєкту «Розумний помічник»', day: 'Четвер', time: '12:00', category: 'online', completed: false },
+            { id: 'ev-6', title: 'Терміново: звірка документів перед підписом', day: "П'ятниця", time: '15:30', category: 'urgent', completed: false }
+        ];
+
+        const DAYS_OF_WEEK = ['Понеділок', 'Вівторок', 'Середа', 'Четвер', "П'ятниця", 'Субота'];
+
+        const CATEGORY_META = {
+            urgent: { label: 'Термінова робота', badge: 'bg-rose-50 text-rose-700 border-rose-200' },
+            online: { label: 'Онлайн-захід', badge: 'bg-sky-50 text-sky-700 border-sky-200' },
+            meeting: { label: 'Зустріч / Нарада', badge: 'bg-indigo-50 text-indigo-700 border-indigo-200' },
+            docs: { label: 'Документообіг', badge: 'bg-amber-50 text-amber-700 border-amber-200' }
+        };
+
+        // Стандартні зразки документів (ДСТУ 4163:2020)
+        const DOCUMENT_TEMPLATES = [
+            {
+                id: 'doc-zayava',
+                category: 'Заяви',
+                title: 'Заява про прийняття на роботу',
+                hint: 'Реквізит «Адресат» розміщується у правому верхньому куті. Прізвище адресата пишеться ВЕЛИКИМИ літерами.',
+                isCustom: false,
+                type: 'text',
+                content: `                                        Директору ТОВ «Інноваційні технології»
+                                        Сергію КОВАЛЕНКУ
+                                        Олени Петрівни БОНДАРЕНКО,
+                                        яка мешкає за адресою:
+                                        вул. Соборна, буд. 15, кв. 42,
+                                        м. Київ, 01001
+                                        тел.: +38 (097) 123-45-67
+
+                                ЗАЯВА
+
+    Прошу прийняти мене на посаду секретаря-діловода адміністративного відділу з [01 грудня 2026 року] з посадовим окладом згідно зі штатним розписом.
+
+    Додатки:
+    1. Копія паспорта громадянина України на 2 арк. в 1 прим.
+    2. Копія диплома про освіту на 1 арк. в 1 прим.
+    3. Резюме на 1 арк. в 1 прим.
+
+[16.11.2026]                    (підпис)                    Олена БОНДАРЕНКО`
+            },
+            {
+                id: 'doc-zayava-vidpustka',
+                category: 'Заяви',
+                title: 'Заява про надання щорічної відпустки',
+                hint: 'В даті документа крапку в кінці не ставлять (16.11.2026), а в підписі вказують Власне ім’я та ПРІЗВИЩЕ.',
+                isCustom: false,
+                type: 'text',
+                content: `                                        Директору ліцею «Перспектива»
+                                        Ігорю МЕЛЬНИКУ
+                                        секретаря навчальної частини
+                                        Наталії САВЧЕНКО
+
+                                ЗАЯВА
+
+    Прошу надати мені частину щорічної основної оплачуваної відпустки тривалістю [14] календарних днів з [23 листопада 2026 року] по [06 грудня 2026 року].
+
+[16.11.2026]                    (підпис)                    Наталія САВЧЕНКО`
+            },
+            {
+                id: 'doc-nakaz',
+                category: 'Накази',
+                title: 'Наказ з основної діяльності',
+                hint: 'Назва виду документа (НАКАЗ) друкується великими літерами по центру, а розпорядча частина починається словом НАКАЗУЮ:',
+                isCustom: false,
+                type: 'text',
+                content: `ТОВАРИСТВО З ОБМЕЖЕНОЮ ВІДПОВІДАЛЬНІСТЮ «ІННОВАЦІЙНІ ТЕХНОЛОГІЇ»
+(ТОВ «ІННОВАЦІЙНІ ТЕХНОЛОГІЇ»)
+
+                                НАКАЗ
+
+[16.11.2026]                     м. Київ                       № [48-ОД]
+
+Про впровадження системи
+електронного документообігу
+
+    З метою оптимізації роботи з вхідною та вихідною кореспонденцією, підвищення швидкості опрацювання службових документів та впровадження сучасних цифрових технологій
+
+НАКАЗУЮ:
+
+    1. Впровадити з [01 грудня 2026 року] в роботу адміністративного відділу електронний асистент секретаря.
+    2. Секретарю-діловоду [Олені БОНДАРЕНКО] забезпечити переведення шаблонів організаційно-розпорядчих документів у цифровий формат відповідно до вимог ДСТУ 4163:2020.
+    3. Контроль за виконанням цього наказу залишаю за собою.
+
+Директор                        (підпис)                    Сергій КОВАЛЕНКО
+
+З наказом ознайомлена:
+[16.11.2026]                    (підпис)                    Олена БОНДАРЕНКО`
+            },
+            {
+                id: 'doc-protokol',
+                category: 'Протоколи',
+                title: 'Протокол засідання (стислий)',
+                hint: 'У протоколі обов’язково вказують Голову, Секретаря, присутніх, Порядок денний та розділи: СЛУХАЛИ, ВИСТУПИЛИ, ВИРІШИЛИ.',
+                isCustom: false,
+                type: 'text',
+                content: `НАВЧАЛЬНИЙ ЗАКЛАД «ТЕХНІЧНИЙ ЛІЦЕЙ»
+
+                                ПРОТОКОЛ
+
+[16.11.2026]                     м. Львів                      № [12]
+
+засідання організаційного комітету
+студентського STEM-проєкту
+
+Голова — [Олександр ПЕТРЕНКО]
+Секретар — [Марія КОВАЛЬЧУК]
+Присутні: [12] осіб (список додається).
+
+ПОРЯДОК ДЕННИЙ:
+1. Про підготовку інтерактивного роздаткового матеріалу (QR-буклету) для презентації проєкту «Розумний помічник майбутнього».
+2. Про розподіл обов’язків між учасниками команди.
+
+1. СЛУХАЛИ:
+[Олександра ПЕТРЕНКА], керівника проєктної групи, який ознайомив присутніх із концепцією інтерактивного електронного асистента секретаря.
+
+ВИСТУПИЛИ:
+[Марія КОВАЛЬЧУК], секретар проєкту, запропонувала інтегрувати у веб-додаток шаблони документів за ДСТУ 4163:2020 та AI-консультанта.
+
+ВИРІШИЛИ:
+1.1. Схвалити структуру інтерактивного веб-додатку у складі 5 модулів.
+1.2. Розмістити QR-код із посиланням на веб-додаток у друкованому буклеті до [20.11.2026].
+
+Голова                          (підпис)                Олександр ПЕТРЕНКО
+Секретар                        (підпис)                Марія КОВАЛЬЧУК`
+            },
+            {
+                id: 'doc-lyst',
+                category: 'Ділові листи',
+                title: 'Діловий лист-запрошення',
+                hint: 'Зверніть увагу на звертання у кличному відмінку («Шановний Валерію Анатолійовичу!») та формулу ввічливості «З повагою».',
+                isCustom: false,
+                type: 'text',
+                content: `                                        Директору наукового парку «Майбутнє»
+                                        Валерію СИДОРЕНКУ
+                                        просп. Науки, 24, м. Харків, 61000
+
+[16.11.2026] № [01-14/215]
+
+Про запрошення на презентацію
+учнівського STEM-проєкту
+
+Шановний Валерію Анатолійовичу!
+
+    Запрошуємо Вас узяти участь у презентації студентського STEM-проєкту «Розумний помічник майбутнього: Електронний асистент секретаря», яка відбудеться [25 листопада 2026 року] о [14:00] у конференц-залі (ауд. 305) або онлайн за посиланням у QR-буклеті.
+
+    Під час заходу команда представить цифрові інструменти автоматизації документообігу та інтелектуального AI-асистента.
+
+    Будемо щиро раді бачити Вас серед почесних гостей!
+
+З повагою
+Директор                        (підпис)                    Сергій КОВАЛЕНКО
+
+Вик.: Олена Бондаренко, тел. +38 (097) 123-45-67`
+            },
+            {
+                id: 'doc-dopovidna',
+                category: 'Доповідні записки',
+                title: 'Доповідна записка керівнику',
+                hint: 'Доповідна записка — внутрішній документ, адресований керівнику установи, який містить виклад фактів та пропозиції.',
+                isCustom: false,
+                type: 'text',
+                content: `                                        Директору ТОВ «Інноваційні технології»
+                                        Сергію КОВАЛЕНКУ
+
+Адміністративний відділ
+
+ДОПОВІДНА ЗАПИСКА
+[16.11.2026] № [14]
+
+Про необхідність оновлення
+оргтехніки приймальні
+
+    Доводжу до Вашого відома, що у зв’язку зі збільшенням обсягу вхідної та вихідної документації наявний багатофункціональний пристрій (МФП) у приймальні працює зі значним перевантаженням та потребує регулярного ремонту.
+
+    З метою забезпечення безперебійного документообігу та своєчасного сканування архівних матеріалів пропоную придбати сучасний швидкісний сканер документів.
+
+Секретар-діловод               (підпис)                    Олена БОНДАРЕНКО`
+            }
+        ];
+
+        // База гарячих клавіш
+        const HOTKEYS_DATA = [
+            { id: 'hk-1', program: 'Windows / Базові', keys: ['Ctrl', 'C'], desc: 'Копіювати виділений текст, файл або об’єкт' },
+            { id: 'hk-2', program: 'Windows / Базові', keys: ['Ctrl', 'V'], desc: 'Вставити скопійований об’єкт із буфера обміну' },
+            { id: 'hk-3', program: 'Windows / Базові', keys: ['Ctrl', 'Z'], desc: 'Скасувати останню дію (крок назад)' },
+            { id: 'hk-4', program: 'Windows / Базові', keys: ['Alt', 'Tab'], desc: 'Миттєве перемикання між відкритими вікнами програм' },
+            { id: 'hk-5', program: 'Windows / Базові', keys: ['Win', 'V'], desc: 'Відкрити журнал буфера обміну (історія копіювань)' },
+            { id: 'hk-6', program: 'Windows / Базові', keys: ['Win', 'Shift', 'S'], desc: 'Зробити скріншот виділеної області екрана' },
+            { id: 'hk-7', program: 'Windows / Базові', keys: ['Win', 'L'], desc: 'Швидко заблокувати комп’ютер (безпека робочого місця)' },
+            { id: 'hk-8', program: 'MS Word', keys: ['Ctrl', 'S'], desc: 'Швидке збереження документа' },
+            { id: 'hk-9', program: 'MS Word', keys: ['Ctrl', 'P'], desc: 'Відкрити вікно друку документа' },
+            { id: 'hk-10', program: 'MS Word', keys: ['Ctrl', 'B'], desc: 'Зробити виділений текст напівжирним' },
+            { id: 'hk-11', program: 'MS Word', keys: ['Ctrl', 'E'], desc: 'Вирівняти заголовок по центру сторінки' },
+            { id: 'hk-12', program: 'MS Word', keys: ['Ctrl', 'J'], desc: 'Вирівняти основний текст по ширині сторінки' },
+            { id: 'hk-13', program: 'MS Word', keys: ['Ctrl', 'Enter'], desc: 'Вставити розрив сторінки (почати з нового аркуша)' },
+            { id: 'hk-14', program: 'MS Word', keys: ['Ctrl', 'F'], desc: 'Швидкий пошук слова або фрази у тексті' },
+            { id: 'hk-15', program: 'MS Excel', keys: ['F2'], desc: 'Редагувати вміст активної клітинки таблиці' },
+            { id: 'hk-16', program: 'MS Excel', keys: ['Ctrl', ';'], desc: 'Миттєво вставити поточну дату у клітинку' },
+            { id: 'hk-17', program: 'MS Excel', keys: ['Ctrl', 'Shift', 'L'], desc: 'Увімкнути або вимкнути автофільтр для таблиці' },
+            { id: 'hk-18', program: 'MS Excel', keys: ['Alt', '='], desc: 'Автоматично підсумувати стовпець або рядок (СУММ)' },
+            { id: 'hk-19', program: 'MS Excel', keys: ['Ctrl', '1'], desc: 'Відкрити вікно форматування клітинок' },
+            { id: 'hk-20', program: 'MS Excel', keys: ['Alt', 'Enter'], desc: 'Перенести текст на новий рядок всередині однієї клітинки' },
+            { id: 'hk-21', program: 'Браузер та Google Документи', keys: ['Ctrl', 'Shift', 'V'], desc: 'Вставити текст БЕЗ форматування (чистий шрифт)' },
+            { id: 'hk-22', program: 'Браузер та Google Документи', keys: ['Ctrl', 'Shift', 'T'], desc: 'Відновити випадково закриту вкладку браузера' },
+            { id: 'hk-23', program: 'Браузер та Google Документи', keys: ['Ctrl', 'K'], desc: 'Вставити або відредагувати гіперпосилання' },
+            { id: 'hk-24', program: 'Браузер та Google Документи', keys: ['Ctrl', 'Alt', 'M'], desc: 'Додати коментар у Google Документах' }
+        ];
+
+        const CHECKLIST_DATA = [
+            { id: 'chk-1', title: 'Береги (поля) сторінки', desc: 'Ліве — 30 мм, праве — 10–15 мм, верхнє та нижнє — по 20 мм.' },
+            { id: 'chk-2', title: 'Шрифт та кегль (розмір)', desc: 'Times New Roman, розмір 12–14 пт (для таблиць дозволено 10–12 пт).' },
+            { id: 'chk-3', title: 'Міжрядковий інтервал та абзац', desc: 'Інтервал 1,0–1,5; абзацний відступ першого рядка — 1,25 см.' },
+            { id: 'chk-4', title: 'Вирівнювання тексту', desc: 'Основний текст — по ширині; назва виду документа (НАКАЗ, ЗАЯВА) — по центру.' },
+            { id: 'chk-5', title: 'Оформлення реквізиту «Адресат»', desc: 'У правому верхньому куті; власне ім’я та ПРІЗВИЩЕ (великими літерами).' },
+            { id: 'chk-6', title: 'Дата, реєстраційний індекс та підпис', desc: 'Дата у форматі ДД.ММ.РРРР (без літери «р.»); у підписі — посада, особистий підпис, Ім’я ПРІЗВИЩЕ.' },
+            { id: 'chk-7', title: 'Перевірка звертання у кличному відмінку', desc: 'Перевірено відсутність русизмів та правильність закінчень (пане Ігоре, пані Олено).' }
+        ];
+
+        const VOCATIVE_DICTIONARY = {
+            'ігор': 'Шановний пане Ігоре!',
+            'олена': 'Шановна пані Олено!',
+            'олександр': 'Шановний пане Олександре!',
+            'олександр петрович': 'Шановний Олександре Петровичу!',
+            'наталія': 'Шановна пані Наталіє!',
+            'наталія іванівна': 'Шановна Наталіє Іванівно!',
+            'валерій': 'Вельмишановний пане Валерію!',
+            'валерій анатолійович': 'Вельмишановний Валерію Анатолійовичу!',
+            'сергій': 'Шановний пане Сергію!',
+            'сергій васильович': 'Шановний Сергію Васильовичу!',
+            'марія': 'Шановна пані Маріє!',
+            'тарас': 'Шановний пане Тарасе!',
+            'оксана': 'Шановна пані Оксано!',
+            'директор': 'Шановний пане директоре! / Шановна пані директорко!',
+            'колеги': 'Шановні колеги!'
+        };
+
+        // ---------------------------------------------------------
+        // 2. СТАН ДОДАТКУ (STATE)
+        // ---------------------------------------------------------
+        let state = {
+            activeTab: 'calendar',
+            events: [],
+            calendarFilter: 'all',
+            activeDocCategory: 'Усі',
+            activeDocId: 'doc-zayava',
+            editedDocs: {},
+            customDocs: [], // Завантажені користувачем файли та власні шаблони
+            activeHotkeyProg: 'all',
+            favoriteHotkeys: [],
+            checkedItems: {},
+            aiMessages: []
+        };
+
+        // Стилі 5 різнокольорових головних кнопок навігації
+        const NAV_STYLES = {
+            calendar: {
+                base: 'bg-gradient-to-br from-blue-500 to-blue-600 text-white shadow-blue-500/25',
+                activeRing: 'ring-4 ring-blue-500/25 shadow-lg opacity-100 scale-[1.01]',
+                inactive: 'opacity-85 hover:opacity-100 shadow-md'
+            },
+            documents: {
+                base: 'bg-gradient-to-br from-emerald-500 to-teal-600 text-white shadow-emerald-500/25',
+                activeRing: 'ring-4 ring-emerald-500/25 shadow-lg opacity-100 scale-[1.01]',
+                inactive: 'opacity-85 hover:opacity-100 shadow-md'
+            },
+            hotkeys: {
+                base: 'bg-gradient-to-br from-amber-500 to-orange-600 text-white shadow-orange-500/25',
+                activeRing: 'ring-4 ring-orange-500/25 shadow-lg opacity-100 scale-[1.01]',
+                inactive: 'opacity-85 hover:opacity-100 shadow-md'
+            },
+            checklist: {
+                base: 'bg-gradient-to-br from-violet-500 to-purple-600 text-white shadow-purple-500/25',
+                activeRing: 'ring-4 ring-purple-500/25 shadow-lg opacity-100 scale-[1.01]',
+                inactive: 'opacity-85 hover:opacity-100 shadow-md'
+            },
+            ai: {
+                base: 'bg-gradient-to-br from-pink-500 to-rose-600 text-white shadow-rose-500/25',
+                activeRing: 'ring-4 ring-pink-500/25 shadow-lg opacity-100 scale-[1.01]',
+                inactive: 'opacity-85 hover:opacity-100 shadow-md'
+            }
+        };
+
+        // ---------------------------------------------------------
+        // 3. ЗБЕРЕЖЕННЯ ТА ЗАВАНТАЖЕННЯ З LOCALSTORAGE
+        // ---------------------------------------------------------
+        function loadFromStorage() {
+            try {
+                const savedEvents = localStorage.getItem(STORAGE_KEYS.CALENDAR);
+                state.events = savedEvents ? JSON.parse(savedEvents) : [...DEFAULT_EVENTS];
+
+                const savedDocs = localStorage.getItem(STORAGE_KEYS.DOCS_EDITED);
+                state.editedDocs = savedDocs ? JSON.parse(savedDocs) : {};
+
+                const savedCustomDocs = localStorage.getItem(STORAGE_KEYS.CUSTOM_DOCS);
+                state.customDocs = savedCustomDocs ? JSON.parse(savedCustomDocs) : [];
+
+                const savedFavs = localStorage.getItem(STORAGE_KEYS.HOTKEYS_FAV);
+                state.favoriteHotkeys = savedFavs ? JSON.parse(savedFavs) : ['hk-1', 'hk-8', 'hk-16'];
+
+                const savedChecks = localStorage.getItem(STORAGE_KEYS.CHECKLIST);
+                state.checkedItems = savedChecks ? JSON.parse(savedChecks) : { 'chk-1': true, 'chk-2': true };
+
+                const savedChat = localStorage.getItem(STORAGE_KEYS.AI_CHAT);
+                state.aiMessages = savedChat ? JSON.parse(savedChat) : [
+                    {
+                        role: 'assistant',
+                        text: 'Вітаю! Я — ваш розумний електронний асистент секретаря. Допоможу скласти заяву, наказ чи лист за ДСТУ 4163:2020, перевірити кличний відмінок у звертаннях або підказати правила діловодства. Запитуйте!'
+                    }
+                ];
+            } catch (e) {
+                console.error('Помилка читання LocalStorage:', e);
+            }
+        }
+
+        function triggerSaveIndicator() {
+            const textEl = document.getElementById('storage-text');
+            if (!textEl) return;
+            textEl.textContent = 'Збереження...';
+            textEl.classList.add('text-emerald-700');
+            setTimeout(() => {
+                textEl.textContent = 'Дані збережено';
+                textEl.classList.remove('text-emerald-700');
+            }, 600);
+        }
+
+        function saveToStorage(key, data) {
+            try {
+                localStorage.setItem(key, JSON.stringify(data));
+                triggerSaveIndicator();
+                return true;
+            } catch (e) {
+                showToast('Перевищено ліміт пам’яті браузера для збереження великого файлу', 'error');
+                return false;
+            }
+        }
+
+        // ---------------------------------------------------------
+        // 4. СПОВІЩЕННЯ (TOAST) ТА НАВІГАЦІЯ
+        // ---------------------------------------------------------
+        function showToast(message, type = 'success') {
+            const container = document.getElementById('toast-container');
+            const toast = document.createElement('div');
+            const colors = type === 'error'
+                ? 'bg-rose-50 border-rose-300 text-rose-900'
+                : 'bg-white border-emerald-300 text-slate-800';
+
+            toast.className = `pointer-events-auto flex items-center gap-2.5 px-4 py-3 rounded-2xl border shadow-xl text-xs sm:text-sm font-bold transition-all duration-300 transform translate-y-2 opacity-0 ${colors}`;
+            toast.innerHTML = `
+                <span class="w-2.5 h-2.5 rounded-full ${type === 'error' ? 'bg-rose-500' : 'bg-emerald-500'}"></span>
+                <span>${message}</span>
+            `;
+            container.appendChild(toast);
+
+            requestAnimationFrame(() => {
+                toast.classList.remove('translate-y-2', 'opacity-0');
+            });
+
+            setTimeout(() => {
+                toast.classList.add('translate-y-2', 'opacity-0');
+                setTimeout(() => toast.remove(), 300);
+            }, 2800);
+        }
+
+        function switchTab(tabId) {
+            state.activeTab = tabId;
+
+            document.querySelectorAll('.tab-content').forEach(sec => sec.classList.add('hidden'));
+            const activeSec = document.getElementById(`section-${tabId}`);
+            if (activeSec) activeSec.classList.remove('hidden');
+
+            Object.keys(NAV_STYLES).forEach(key => {
+                const btn = document.getElementById(`nav-${key}`);
+                if (!btn) return;
+                const s = NAV_STYLES[key];
+                const isColSpan = key === 'ai' ? 'col-span-2 sm:col-span-1' : '';
+                const stateClasses = key === tabId ? s.activeRing : s.inactive;
+                btn.className = `nav-btn ${isColSpan} group relative flex flex-col sm:flex-row items-center justify-center sm:justify-start gap-3 p-3.5 rounded-2xl text-left transition-all duration-200 cursor-pointer ${s.base} ${stateClasses}`;
+            });
+        }
+
+        // ---------------------------------------------------------
+        // 5. МОДУЛЬ 1: КАЛЕНДАР
+        // ---------------------------------------------------------
+        function renderCalendar() {
+            const grid = document.getElementById('calendar-grid');
+            const statsEl = document.getElementById('calendar-stats');
+
+            const total = state.events.length;
+            const done = state.events.filter(e => e.completed).length;
+            statsEl.textContent = `Виконано: ${done} з ${total}`;
+
+            grid.innerHTML = DAYS_OF_WEEK.map(day => {
+                let dayEvents = state.events
+                    .filter(ev => ev.day === day)
+                    .filter(ev => state.calendarFilter === 'all' || ev.category === state.calendarFilter)
+                    .sort((a, b) => a.time.localeCompare(b.time));
+
+                const eventsHtml = dayEvents.length === 0
+                    ? `<div class="py-6 text-center text-xs text-slate-400 border border-dashed border-slate-200 rounded-xl bg-slate-50/50">Немає запланованих подій</div>`
+                    : dayEvents.map(ev => {
+                        const meta = CATEGORY_META[ev.category] || CATEGORY_META.docs;
+                        return `
+                            <div class="group p-3 rounded-xl bg-slate-50/90 border ${ev.completed ? 'border-slate-200 opacity-60' : 'border-slate-200 hover:border-blue-300 bg-white'} transition flex items-start justify-between gap-2.5 shadow-2xs">
+                                <div class="flex items-start gap-2.5 min-w-0">
+                                    <input type="checkbox" ${ev.completed ? 'checked' : ''} onchange="toggleEventDone('${ev.id}')" class="mt-1 w-4 h-4 rounded accent-blue-600 cursor-pointer shrink-0">
+                                    <div class="min-w-0">
+                                        <div class="flex items-center gap-2 flex-wrap mb-1">
+                                            <span class="text-xs font-mono font-bold text-blue-700 bg-blue-50 border border-blue-200 px-1.5 py-0.5 rounded">${ev.time}</span>
+                                            <span class="text-[10px] font-bold px-2 py-0.5 rounded-full border ${meta.badge}">${meta.label}</span>
+                                        </div>
+                                        <p class="text-xs sm:text-sm font-semibold ${ev.completed ? 'line-through text-slate-400' : 'text-slate-800'} break-words">${escapeHtml(ev.title)}</p>
+                                    </div>
+                                </div>
+                                <button onclick="deleteCalendarEvent('${ev.id}')" class="p-1 text-slate-400 hover:text-rose-600 rounded-lg transition cursor-pointer shrink-0" title="Видалити подію">
+                                    <i data-lucide="trash-2" class="w-4 h-4"></i>
+                                </button>
+                            </div>
+                        `;
+                    }).join('');
+
+                return `
+                    <div class="light-card rounded-2xl p-4 flex flex-col">
+                        <div class="flex items-center justify-between pb-2.5 mb-3 border-b border-slate-100">
+                            <h3 class="font-extrabold text-sm sm:text-base text-slate-800 flex items-center gap-2">
+                                <span class="w-2.5 h-2.5 rounded-full bg-blue-500"></span>
+                                ${day}
+                            </h3>
+                            <span class="text-xs font-bold px-2.5 py-0.5 rounded-lg bg-blue-50 text-blue-700">${dayEvents.length}</span>
+                        </div>
+                        <div class="space-y-2.5 flex-1">
+                            ${eventsHtml}
+                        </div>
+                    </div>
+                `;
+            }).join('');
+
+            lucide.createIcons();
+        }
+
+        function addCalendarEvent(e) {
+            e.preventDefault();
+            const titleInput = document.getElementById('event-title');
+            const dayInput = document.getElementById('event-day');
+            const timeInput = document.getElementById('event-time');
+            const catInput = document.getElementById('event-category');
+
+            const title = titleInput.value.trim();
+            if (!title) return;
+
+            const newEvent = {
+                id: 'ev-' + Date.now(),
+                title: title,
+                day: dayInput.value,
+                time: timeInput.value || '10:00',
+                category: catInput.value,
+                completed: false
+            };
+
+            state.events.push(newEvent);
+            saveToStorage(STORAGE_KEYS.CALENDAR, state.events);
+            titleInput.value = '';
+            renderCalendar();
+            showToast(`Подію додано на ${newEvent.day}!`);
+        }
+
+        function toggleEventDone(id) {
+            const ev = state.events.find(item => item.id === id);
+            if (ev) {
+                ev.completed = !ev.completed;
+                saveToStorage(STORAGE_KEYS.CALENDAR, state.events);
+                renderCalendar();
+            }
+        }
+
+        function deleteCalendarEvent(id) {
+            state.events = state.events.filter(item => item.id !== id);
+            saveToStorage(STORAGE_KEYS.CALENDAR, state.events);
+            renderCalendar();
+            showToast('Подію видалено');
+        }
+
+        function setCalendarFilter(filter) {
+            state.calendarFilter = filter;
+            document.querySelectorAll('.cal-filter-btn').forEach(btn => {
+                const isSelected = btn.getAttribute('data-cal-filter') === filter;
+                btn.className = isSelected
+                    ? 'cal-filter-btn px-3 py-1.5 rounded-xl text-xs font-bold bg-blue-600 text-white shadow-sm cursor-pointer'
+                    : 'cal-filter-btn px-3 py-1.5 rounded-xl text-xs font-semibold bg-white text-slate-700 border border-slate-200 hover:border-blue-300 cursor-pointer';
+            });
+            renderCalendar();
+        }
+
+        function resetCalendarDefaults() {
+            state.events = [...DEFAULT_EVENTS];
+            saveToStorage(STORAGE_KEYS.CALENDAR, state.events);
+            renderCalendar();
+            showToast('Відновлено демонстраційний розклад тижня');
+        }
+
+        // ---------------------------------------------------------
+        // 6. МОДУЛЬ 2: ДОКУМЕНТИ ТА ЗАВАНТАЖЕННЯ ВЛАСНИХ ФАЙЛІВ
+        // ---------------------------------------------------------
+        function getAllDocuments() {
+            return [...state.customDocs, ...DOCUMENT_TEMPLATES];
+        }
+
+        function renderDocumentsModule() {
+            const categories = ['Усі', 'Мої завантажені', 'Заяви', 'Накази', 'Протоколи', 'Ділові листи', 'Доповідні записки'];
+            const catContainer = document.getElementById('doc-categories');
+
+            catContainer.innerHTML = categories.map(cat => {
+                const active = state.activeDocCategory === cat;
+                const badgeCount = cat === 'Мої завантажені' ? ` (${state.customDocs.length})` : '';
+                return `
+                    <button onclick="setDocCategory('${cat}')" class="px-3.5 py-1.5 rounded-xl text-xs font-bold transition cursor-pointer ${
+                        active
+                            ? 'bg-emerald-600 text-white shadow-sm'
+                            : 'bg-white text-slate-700 border border-slate-200 hover:border-emerald-300'
+                    }">
+                        ${cat}${badgeCount}
+                    </button>
+                `;
+            }).join('');
+
+            const allDocs = getAllDocuments();
+            const filteredDocs = state.activeDocCategory === 'Усі'
+                ? allDocs
+                : state.activeDocCategory === 'Мої завантажені'
+                    ? state.customDocs
+                    : allDocs.filter(d => d.category === state.activeDocCategory);
+
+            const listContainer = document.getElementById('doc-list');
+            if (filteredDocs.length === 0) {
+                listContainer.innerHTML = `
+                    <div class="p-6 text-center rounded-2xl border border-dashed border-emerald-300 bg-emerald-50/50 space-y-2">
+                        <p class="text-xs font-semibold text-slate-600">У цій категорії ще немає документів.</p>
+                        <button onclick="document.getElementById('file-upload-input').click()" class="px-3 py-1.5 rounded-xl bg-emerald-600 text-white text-xs font-bold cursor-pointer">
+                            + Завантажити файл
+                        </button>
+                    </div>
+                `;
+            } else {
+                listContainer.innerHTML = filteredDocs.map(doc => {
+                    const isSelected = doc.id === state.activeDocId;
+                    const isModified = Boolean(state.editedDocs[doc.id]);
+                    return `
+                        <button onclick="selectDocument('${doc.id}')" class="w-full text-left p-3.5 rounded-2xl border transition cursor-pointer flex items-start justify-between gap-2 ${
+                            isSelected
+                                ? 'bg-emerald-50/90 border-emerald-400 shadow-sm'
+                                : 'light-card border-slate-200 hover:border-emerald-300'
+                        }">
+                            <div class="min-w-0">
+                                <div class="flex items-center gap-1.5 flex-wrap mb-1">
+                                    <span class="text-[10px] font-extrabold uppercase tracking-wider px-2 py-0.5 rounded ${
+                                        doc.isCustom ? 'bg-amber-100 text-amber-800' : 'bg-emerald-100 text-emerald-800'
+                                    }">${doc.category}</span>
+                                    ${doc.isCustom ? '<span class="text-[10px] font-bold text-blue-600">• Мій файл</span>' : ''}
+                                    ${isModified ? '<span class="text-[10px] text-emerald-700 font-bold">• змінено</span>' : ''}
+                                </div>
+                                <div class="text-sm font-bold text-slate-900 truncate">${escapeHtml(doc.title)}</div>
+                                ${doc.fileMeta ? `<div class="text-[11px] text-slate-500 mt-0.5">${doc.fileMeta}</div>` : ''}
+                            </div>
+                            <i data-lucide="chevron-right" class="w-4 h-4 mt-1 shrink-0 ${isSelected ? 'text-emerald-600' : 'text-slate-400'}"></i>
+                        </button>
+                    `;
+                }).join('');
+            }
+
+            renderActiveDocumentWorkspace();
+            lucide.createIcons();
+        }
+
+        function setDocCategory(cat) {
+            state.activeDocCategory = cat;
+            const allDocs = getAllDocuments();
+            const filtered = cat === 'Усі'
+                ? allDocs
+                : cat === 'Мої завантажені'
+                    ? state.customDocs
+                    : allDocs.filter(d => d.category === cat);
+
+            if (filtered.length > 0 && !filtered.some(d => d.id === state.activeDocId)) {
+                state.activeDocId = filtered[0].id;
+            }
+            renderDocumentsModule();
+        }
+
+        function selectDocument(docId) {
+            state.activeDocId = docId;
+            renderDocumentsModule();
+        }
+
+        // Обробка завантаження файлу користувачем
+        function handleFileUpload(event) {
+            const file = event.target.files?.[0];
+            if (!file) return;
+
+            // Перевірка розміру (до 2.5 МБ для надійного збереження в LocalStorage)
+            if (file.size > 2.5 * 1024 * 1024) {
+                showToast('Файл завеликий (макс. 2.5 МБ для збереження у браузері)', 'error');
+                event.target.value = '';
+                return;
+            }
+
+            const ext = file.name.split('.').pop().toLowerCase();
+            const sizeKb = (file.size / 1024).toFixed(1) + ' КБ';
+            const dateStr = new Date().toLocaleDateString('uk-UA');
+            const newId = 'custom-' + Date.now();
+
+            const reader = new FileReader();
+
+            // Якщо текстовий файл — зчитуємо текст у редактор
+            if (ext === 'txt' || ext === 'md' || ext === 'csv') {
+                reader.onload = function (e) {
+                    const newDoc = {
+                        id: newId,
+                        category: 'Мої завантажені',
+                        title: file.name,
+                        hint: `Завантажений текстовий документ (${sizeKb}, додано ${dateStr}). Ви можете редагувати його та копіювати.`,
+                        isCustom: true,
+                        type: 'text',
+                        fileMeta: `${ext.toUpperCase()} • ${sizeKb} • ${dateStr}`,
+                        content: e.target.result || ''
+                    };
+                    state.customDocs.unshift(newDoc);
+                    if (saveToStorage(STORAGE_KEYS.CUSTOM_DOCS, state.customDocs)) {
+                        state.activeDocCategory = 'Усі';
+                        state.activeDocId = newId;
+                        renderDocumentsModule();
+                        showToast(`Файл «${file.name}» успішно завантажено!`);
+                    }
+                };
+                reader.readAsText(file, 'UTF-8');
+            } else {
+                // Для .docx, .pdf, .xlsx, зображень — зберігаємо як DataURL для скачування/перегляду + поле для нотаток
+                reader.onload = function (e) {
+                    const isImage = ['jpg', 'jpeg', 'png', 'webp'].includes(ext);
+                    const newDoc = {
+                        id: newId,
+                        category: 'Мої завантажені',
+                        title: file.name,
+                        hint: `Робочий файл (${ext.toUpperCase()}, ${sizeKb}, завантажено ${dateStr}). Зберігається у вашому архіві.`,
+                        isCustom: true,
+                        type: isImage ? 'image' : 'binary',
+                        fileName: file.name,
+                        fileExt: ext.toUpperCase(),
+                        fileSize: sizeKb,
+                        uploadDate: dateStr,
+                        fileDataUrl: e.target.result,
+                        fileMeta: `${ext.toUpperCase()} • ${sizeKb} • ${dateStr}`,
+                        notes: `Робочий документ секретаря: ${file.name}\nДата додавання: ${dateStr}\nНотатки щодо виконання: `
+                    };
+                    state.customDocs.unshift(newDoc);
+                    if (saveToStorage(STORAGE_KEYS.CUSTOM_DOCS, state.customDocs)) {
+                        state.activeDocCategory = 'Усі';
+                        state.activeDocId = newId;
+                        renderDocumentsModule();
+                        showToast(`Документ «${file.name}» збережено у ваш архів!`);
+                    } else {
+                        state.customDocs.shift();
+                    }
+                };
+                reader.readAsDataURL(file);
+            }
+
+            event.target.value = '';
+        }
+
+        // Створення нового порожнього текстового шаблону вручну
+        function createNewCustomDoc() {
+            const newId = 'custom-text-' + Date.now();
+            const dateStr = new Date().toLocaleDateString('uk-UA');
+            const newDoc = {
+                id: newId,
+                category: 'Мої завантажені',
+                title: `Новий документ (${dateStr})`,
+                hint: 'Власний текстовий шаблон. Заповніть текст нижче — він автоматично збережеться.',
+                isCustom: true,
+                type: 'text',
+                fileMeta: `Шаблон • ${dateStr}`,
+                content: `                                        Керівнику установи
+                                        [Прізвище ІМ'Я]
+
+                                НАЗВА ДОКУМЕНТА
+
+    Введіть текст вашого документа тут...
+
+[${dateStr}]                    (підпис)                    [Ім'я ПРІЗВИЩЕ]`
+            };
+            state.customDocs.unshift(newDoc);
+            saveToStorage(STORAGE_KEYS.CUSTOM_DOCS, state.customDocs);
+            state.activeDocCategory = 'Усі';
+            state.activeDocId = newId;
+            renderDocumentsModule();
+            showToast('Створено новий документ у вашому архіві!');
+        }
+
+        function renderActiveDocumentWorkspace() {
+            const allDocs = getAllDocuments();
+            const doc = allDocs.find(d => d.id === state.activeDocId) || allDocs[0];
+            if (!doc) return;
+
+            document.getElementById('current-doc-title').textContent = `${doc.category}: ${doc.title}`;
+            document.getElementById('doc-hint-text').textContent = doc.hint;
+
+            const toolbar = document.getElementById('doc-toolbar-actions');
+            const workspace = document.getElementById('doc-workspace-body');
+
+            // Якщо це завантажений офісний файл (.docx, .pdf, .xlsx) або зображення
+            if (doc.type === 'binary' || doc.type === 'image') {
+                toolbar.innerHTML = `
+                    <button onclick="downloadCustomBinaryFile('${doc.id}')" class="px-3.5 py-1.5 rounded-xl text-xs font-bold bg-gradient-to-r from-emerald-500 to-teal-600 text-white shadow-xs transition flex items-center gap-1.5 cursor-pointer">
+                        <i data-lucide="download" class="w-3.5 h-3.5"></i>
+                        <span>Завантажити на пристрій</span>
+                    </button>
+                    <button onclick="deleteCustomDocument('${doc.id}')" class="px-3 py-1.5 rounded-xl text-xs font-bold bg-rose-50 hover:bg-rose-100 text-rose-700 border border-rose-200 transition flex items-center gap-1.5 cursor-pointer">
+                        <i data-lucide="trash-2" class="w-3.5 h-3.5"></i>
+                        <span>Видалити</span>
+                    </button>
+                `;
+
+                const previewHtml = doc.type === 'image'
+                    ? `<div class="mb-4 rounded-xl overflow-hidden border border-slate-200 bg-white p-2 flex justify-center">
+                           <img src="${doc.fileDataUrl}" alt="${escapeHtml(doc.title)}" class="max-h-64 rounded-lg object-contain">
+                       </div>`
+                    : '';
+
+                workspace.innerHTML = `
+                    <div class="bg-white rounded-2xl border border-slate-200 p-5 space-y-4">
+                        <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 p-4 rounded-2xl bg-emerald-50/70 border border-emerald-200">
+                            <div class="flex items-center gap-3.5">
+                                <div class="w-12 h-12 rounded-2xl bg-emerald-600 text-white font-extrabold text-xs flex items-center justify-center shrink-0 shadow-sm">
+                                    ${doc.fileExt}
+                                </div>
+                                <div>
+                                    <div class="text-sm sm:text-base font-extrabold text-slate-900 break-all">${escapeHtml(doc.fileName)}</div>
+                                    <div class="text-xs text-slate-600 mt-0.5">Розмір: <strong>${doc.fileSize}</strong> • Завантажено: <strong>${doc.uploadDate}</strong></div>
+                                </div>
+                            </div>
+                            <button onclick="downloadCustomBinaryFile('${doc.id}')" class="px-4 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold shrink-0 cursor-pointer flex items-center justify-center gap-1.5">
+                                <i data-lucide="download" class="w-4 h-4"></i>
+                                <span>Відкрити / Скачати</span>
+                            </button>
+                        </div>
+
+                        ${previewHtml}
+
+                        <div>
+                            <label class="block text-xs font-bold text-slate-700 mb-1.5">Робочі нотатки та резолюція до цього документа (автозбереження):</label>
+                            <textarea rows="8" oninput="updateCustomDocNotes('${doc.id}', this.value)" class="w-full p-3.5 rounded-xl bg-slate-50 border border-slate-300 text-sm text-slate-800 focus:outline-none focus:border-emerald-500 focus:bg-white transition">${escapeHtml(doc.notes || '')}</textarea>
+                        </div>
+                    </div>
+                `;
+            } else {
+                // Стандартний або власний текстовий документ
+                const deleteBtnHtml = doc.isCustom
+                    ? `<button onclick="deleteCustomDocument('${doc.id}')" class="px-3 py-1.5 rounded-xl text-xs font-bold bg-rose-50 hover:bg-rose-100 text-rose-700 border border-rose-200 transition flex items-center gap-1.5 cursor-pointer">
+                           <i data-lucide="trash-2" class="w-3.5 h-3.5"></i>
+                           <span>Видалити</span>
+                       </button>`
+                    : `<button onclick="resetCurrentDocument()" class="px-3 py-1.5 rounded-xl text-xs font-semibold bg-white hover:bg-slate-100 text-slate-700 border border-slate-300 transition flex items-center gap-1.5 cursor-pointer">
+                           <i data-lucide="rotate-ccw" class="w-3.5 h-3.5"></i>
+                           <span>Скинути</span>
+                       </button>`;
+
+                toolbar.innerHTML = `
+                    ${deleteBtnHtml}
+                    <button onclick="downloadTextAsFile('${doc.id}')" class="px-3 py-1.5 rounded-xl text-xs font-bold bg-emerald-50 hover:bg-emerald-100 text-emerald-800 border border-emerald-200 transition flex items-center gap-1.5 cursor-pointer" title="Зберегти як .txt файл">
+                        <i data-lucide="download" class="w-3.5 h-3.5"></i>
+                        <span>Скачати .txt</span>
+                    </button>
+                    <button onclick="copyDocumentText()" class="px-3.5 py-1.5 rounded-xl text-xs font-bold bg-gradient-to-r from-emerald-500 to-teal-600 hover:from-emerald-600 hover:to-teal-700 text-white shadow-xs transition flex items-center gap-1.5 cursor-pointer">
+                        <i data-lucide="copy" class="w-3.5 h-3.5"></i>
+                        <span>Скопіювати текст</span>
+                    </button>
+                `;
+
+                const textValue = state.editedDocs[doc.id] !== undefined ? state.editedDocs[doc.id] : doc.content;
+                workspace.innerHTML = `
+                    <textarea id="doc-editor" rows="16" oninput="saveEditedDocument()" class="w-full h-full min-h-[380px] p-4 sm:p-6 rounded-xl bg-white text-slate-900 font-mono text-xs sm:text-sm leading-relaxed border border-slate-300 focus:outline-none focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20 resize-y shadow-inner" spellcheck="false">${escapeHtml(textValue)}</textarea>
+                `;
+            }
+
+            lucide.createIcons();
+        }
+
+        function saveEditedDocument() {
+            const editor = document.getElementById('doc-editor');
+            if (!editor) return;
+            state.editedDocs[state.activeDocId] = editor.value;
+            saveToStorage(STORAGE_KEYS.DOCS_EDITED, state.editedDocs);
+        }
+
+        function updateCustomDocNotes(docId, val) {
+            const doc = state.customDocs.find(d => d.id === docId);
+            if (doc) {
+                doc.notes = val;
+                saveToStorage(STORAGE_KEYS.CUSTOM_DOCS, state.customDocs);
+            }
+        }
+
+        function downloadCustomBinaryFile(docId) {
+            const doc = state.customDocs.find(d => d.id === docId);
+            if (!doc || !doc.fileDataUrl) return;
+            const a = document.createElement('a');
+            a.href = doc.fileDataUrl;
+            a.download = doc.fileName || doc.title;
+            a.click();
+            showToast(`Завантаження файлу «${doc.title}»...`);
+        }
+
+        function downloadTextAsFile(docId) {
+            const allDocs = getAllDocuments();
+            const doc = allDocs.find(d => d.id === docId);
+            if (!doc) return;
+            const text = state.editedDocs[doc.id] !== undefined ? state.editedDocs[doc.id] : doc.content;
+            const blob = new Blob([text], { type: 'text/plain;charset=utf-8' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `${doc.title.replace(/[^\wа-яА-ЯіІїЇєЄґҐ\s-]/g, '')}.txt`;
+            a.click();
+            URL.revokeObjectURL(url);
+            showToast('Документ збережено у файл .txt');
+        }
+
+        function deleteCustomDocument(docId) {
+            state.customDocs = state.customDocs.filter(d => d.id !== docId);
+            delete state.editedDocs[docId];
+            saveToStorage(STORAGE_KEYS.CUSTOM_DOCS, state.customDocs);
+            saveToStorage(STORAGE_KEYS.DOCS_EDITED, state.editedDocs);
+            state.activeDocId = DOCUMENT_TEMPLATES[0].id;
+            renderDocumentsModule();
+            showToast('Завантажений документ видалено');
+        }
+
+        function resetCurrentDocument() {
+            delete state.editedDocs[state.activeDocId];
+            saveToStorage(STORAGE_KEYS.DOCS_EDITED, state.editedDocs);
+            renderDocumentsModule();
+            showToast('Шаблон повернуто до початкового вигляду');
+        }
+
+        function copyDocumentText() {
+            const editor = document.getElementById('doc-editor');
+            if (!editor) return;
+            editor.select();
+            editor.setSelectionRange(0, 99999);
+            try {
+                document.execCommand('copy');
+                showToast('Скопійовано! Текст документа готовий до вставки.');
+            } catch (err) {
+                showToast('Не вдалося скопіювати текст', 'error');
+            }
+            window.getSelection().removeAllRanges();
+        }
+
+        // ---------------------------------------------------------
+        // 7. МОДУЛЬ 3: ГАРЯЧІ КЛАВІШІ
+        // ---------------------------------------------------------
+        function renderHotkeys() {
+            const grid = document.getElementById('hotkeys-grid');
+            const search = (document.getElementById('hotkey-search')?.value || '').toLowerCase().trim();
+            document.getElementById('fav-count-badge').textContent = state.favoriteHotkeys.length;
+
+            let filtered = HOTKEYS_DATA.filter(hk => {
+                const matchesProg = state.activeHotkeyProg === 'all'
+                    ? true
+                    : state.activeHotkeyProg === 'favorites'
+                        ? state.favoriteHotkeys.includes(hk.id)
+                        : hk.program === state.activeHotkeyProg;
+
+                const matchesSearch = !search ||
+                    hk.desc.toLowerCase().includes(search) ||
+                    hk.keys.join('+').toLowerCase().includes(search) ||
+                    hk.program.toLowerCase().includes(search);
+
+                return matchesProg && matchesSearch;
+            });
+
+            if (filtered.length === 0) {
+                grid.innerHTML = `
+                    <div class="col-span-full py-10 text-center text-slate-500 text-sm bg-slate-50 rounded-2xl border border-dashed border-slate-300">
+                        За вашим запитом комбінацій не знайдено.
+                    </div>
+                `;
+                return;
+            }
+
+            grid.innerHTML = filtered.map(hk => {
+                const isFav = state.favoriteHotkeys.includes(hk.id);
+                const keysHtml = hk.keys.map(k => `<kbd class="kbd-key">${k}</kbd>`).join('<span class="text-orange-500 font-extrabold mx-1">+</span>');
+
+                return `
+                    <div class="light-card rounded-2xl p-4 flex flex-col justify-between gap-3 hover:border-orange-300">
+                        <div class="flex items-start justify-between gap-2">
+                            <span class="text-[11px] font-bold px-2.5 py-0.5 rounded-lg bg-orange-50 text-orange-700 border border-orange-200">
+                                ${hk.program}
+                            </span>
+                            <button onclick="toggleFavoriteHotkey('${hk.id}')" class="p-1.5 rounded-xl transition cursor-pointer ${
+                                isFav ? 'bg-amber-100 text-amber-500' : 'bg-slate-100 text-slate-400 hover:text-amber-500'
+                            }" title="${isFav ? 'Прибрати з обраного' : 'Додати в обране'}">
+                                <i data-lucide="star" class="w-4 h-4 ${isFav ? 'fill-amber-400' : ''}"></i>
+                            </button>
+                        </div>
+
+                        <div class="flex items-center flex-wrap py-1">
+                            ${keysHtml}
+                        </div>
+
+                        <p class="text-xs sm:text-sm font-medium text-slate-700 leading-snug">
+                            ${hk.desc}
+                        </p>
+                    </div>
+                `;
+            }).join('');
+
+            lucide.createIcons();
+        }
+
+        function setHotkeyProgram(prog) {
+            state.activeHotkeyProg = prog;
+            document.querySelectorAll('.hk-tab-btn').forEach(btn => {
+                const active = btn.getAttribute('data-hk-prog') === prog;
+                btn.className = active
+                    ? 'hk-tab-btn px-3.5 py-2 rounded-xl text-xs font-bold bg-orange-500 text-white shadow-sm cursor-pointer flex items-center gap-1.5'
+                    : 'hk-tab-btn px-3.5 py-2 rounded-xl text-xs font-semibold bg-white text-slate-700 border border-slate-200 hover:border-orange-300 cursor-pointer flex items-center gap-1.5';
+            });
+            renderHotkeys();
+        }
+
+        function toggleFavoriteHotkey(id) {
+            if (state.favoriteHotkeys.includes(id)) {
+                state.favoriteHotkeys = state.favoriteHotkeys.filter(item => item !== id);
+                showToast('Видалено з обраних комбінацій');
+            } else {
+                state.favoriteHotkeys.push(id);
+                showToast('Додано у ваш набір клавіш ⭐');
+            }
+            saveToStorage(STORAGE_KEYS.HOTKEYS_FAV, state.favoriteHotkeys);
+            renderHotkeys();
+        }
+
+        // ---------------------------------------------------------
+        // 8. МОДУЛЬ 4: ЧЕК-ЛИСТ ТА КЛИЧНИЙ ВІДМІНОК
+        // ---------------------------------------------------------
+        function renderChecklist() {
+            const container = document.getElementById('checklist-items');
+            const total = CHECKLIST_DATA.length;
+            const checkedCount = CHECKLIST_DATA.filter(item => state.checkedItems[item.id]).length;
+            const percent = Math.round((checkedCount / total) * 100);
+
+            document.getElementById('checklist-percent').textContent = `${percent}% (${checkedCount}/${total})`;
+            document.getElementById('checklist-progress-bar').style.width = `${percent}%`;
+
+            const statusMsg = document.getElementById('checklist-status-msg');
+            if (percent === 100) {
+                statusMsg.innerHTML = '<span class="text-emerald-700 font-bold">🎉 Ідеально! Документ повністю відповідає стандартам ДСТУ 4163:2020.</span>';
+            } else if (percent >= 50) {
+                statusMsg.textContent = 'Чудовий прогрес! Перевірте решту пунктів.';
+            } else {
+                statusMsg.textContent = 'Відмічайте виконані пункти перед подачею документа.';
+            }
+
+            container.innerHTML = CHECKLIST_DATA.map(item => {
+                const isChecked = Boolean(state.checkedItems[item.id]);
+                return `
+                    <label class="flex items-start gap-3 p-3 rounded-2xl border transition cursor-pointer ${
+                        isChecked
+                            ? 'bg-violet-50/90 border-violet-300'
+                            : 'bg-white border-slate-200 hover:border-violet-300'
+                    }">
+                        <input type="checkbox" ${isChecked ? 'checked' : ''} onchange="toggleChecklistItem('${item.id}')" class="mt-1 w-4 h-4 rounded accent-violet-600 cursor-pointer shrink-0">
+                        <div>
+                            <div class="text-xs sm:text-sm font-bold ${isChecked ? 'text-violet-900 line-through opacity-75' : 'text-slate-900'}">${item.title}</div>
+                            <div class="text-xs text-slate-600 mt-0.5">${item.desc}</div>
+                        </div>
+                    </label>
+                `;
+            }).join('');
+        }
+
+        function toggleChecklistItem(id) {
+            state.checkedItems[id] = !state.checkedItems[id];
+            saveToStorage(STORAGE_KEYS.CHECKLIST, state.checkedItems);
+            renderChecklist();
+        }
+
+        function resetChecklist() {
+            state.checkedItems = {};
+            saveToStorage(STORAGE_KEYS.CHECKLIST, state.checkedItems);
+            renderChecklist();
+            showToast('Чек-лист очищено');
+        }
+
+        function selectVocativeSample(val) {
+            const input = document.getElementById('vocative-input');
+            input.value = val;
+            generateVocativeHint();
+        }
+
+        function generateVocativeHint() {
+            const raw = document.getElementById('vocative-input').value.trim();
+            const resBox = document.getElementById('vocative-result');
+
+            if (!raw) {
+                resBox.innerHTML = '<span>Введіть ім’я вище, щоб побачити правильну форму звертання.</span>';
+                return;
+            }
+
+            const lower = raw.toLowerCase();
+            if (VOCATIVE_DICTIONARY[lower]) {
+                resBox.innerHTML = `
+                    <div>
+                        <div class="text-[11px] font-semibold text-slate-500">Правильне звертання у листі:</div>
+                        <div class="text-sm sm:text-base font-extrabold text-emerald-700">${VOCATIVE_DICTIONARY[lower]}</div>
+                    </div>
+                    <button onclick="copyTextDirect('${VOCATIVE_DICTIONARY[lower]}')" class="px-3 py-1.5 rounded-xl bg-purple-600 hover:bg-purple-700 text-white text-xs font-bold cursor-pointer">
+                        Копіювати
+                    </button>
+                `;
+                return;
+            }
+
+            const words = raw.split(/\s+/);
+            const convertedWords = words.map(w => {
+                const cap = w.charAt(0).toUpperCase() + w.slice(1);
+                if (cap.endsWith('ович')) return cap.slice(0, -4) + 'овичу';
+                if (cap.endsWith('йович')) return cap.slice(0, -5) + 'йовичу';
+                if (cap.endsWith('івна')) return cap.slice(0, -4) + 'івно';
+                if (cap.endsWith('ївна')) return cap.slice(0, -4) + 'ївно';
+                if (cap.endsWith('ія')) return cap.slice(0, -2) + 'іє';
+                if (cap.endsWith('а')) return cap.slice(0, -1) + 'о';
+                if (cap.endsWith('я')) return cap.slice(0, -1) + 'е';
+                if (cap.endsWith('й')) return cap.slice(0, -1) + 'ю';
+                if (cap.toLowerCase() === 'ігор') return 'Ігоре';
+                if (/[бвгґджзклмнпрстфхцчшщ]$/.test(cap)) return cap + 'е';
+                return cap;
+            });
+
+            const suggestion = `Шановний(-а) ${convertedWords.join(' ')}!`;
+
+            resBox.innerHTML = `
+                <div>
+                    <div class="text-[11px] font-semibold text-slate-500">Рекомендована форма (кличний відмінок):</div>
+                    <div class="text-sm sm:text-base font-extrabold text-purple-800">${escapeHtml(suggestion)}</div>
+                </div>
+                <button onclick="copyTextDirect('${escapeHtml(suggestion)}')" class="px-3 py-1.5 rounded-xl bg-purple-600 hover:bg-purple-700 text-white text-xs font-bold cursor-pointer">
+                    Копіювати
+                </button>
+            `;
+        }
+
+        function copyTextDirect(text) {
+            const temp = document.createElement('textarea');
+            temp.value = text;
+            document.body.appendChild(temp);
+            temp.select();
+            document.execCommand('copy');
+            document.body.removeChild(temp);
+            showToast(`Скопійовано: ${text}`);
+        }
+
+        // ---------------------------------------------------------
+        // 9. МОДУЛЬ 5: AI-ПОМІЧНИК (GEMINI API)
+        // ---------------------------------------------------------
+        function renderAiMessages() {
+            const container = document.getElementById('ai-messages');
+            container.innerHTML = state.aiMessages.map(msg => {
+                const isUser = msg.role === 'user';
+                const formattedText = formatAiMarkdown(msg.text);
+
+                if (isUser) {
+                    return `
+                        <div class="flex justify-end">
+                            <div class="max-w-[85%] sm:max-w-[75%] rounded-2xl rounded-tr-sm px-4 py-3 bg-gradient-to-br from-pink-500 to-rose-600 text-white text-xs sm:text-sm font-medium shadow-md shadow-pink-500/15 leading-relaxed">
+                                ${escapeHtml(msg.text)}
+                            </div>
+                        </div>
+                    `;
+                } else {
+                    return `
+                        <div class="flex items-start gap-2.5">
+                            <div class="w-8 h-8 rounded-xl bg-pink-100 border border-pink-200 flex items-center justify-center shrink-0 mt-0.5">
+                                <i data-lucide="bot" class="w-4 h-4 text-pink-600"></i>
+                            </div>
+                            <div class="max-w-[88%] sm:max-w-[80%] rounded-2xl rounded-tl-sm px-4 py-3 bg-slate-50 border border-slate-200 text-slate-800 text-xs sm:text-sm leading-relaxed space-y-2 shadow-2xs">
+                                ${formattedText}
+                            </div>
+                        </div>
+                    `;
+                }
+            }).join('');
+
+            container.scrollTop = container.scrollHeight;
+            lucide.createIcons();
+        }
+
+        function formatAiMarkdown(text) {
+            let safe = escapeHtml(text);
+            safe = safe.replace(/\*\*(.*?)\*\*/g, '<strong class="text-slate-950 font-bold">$1</strong>');
+            safe = safe.replace(/```([\s\S]*?)```/g, '<pre class="p-3 my-2 rounded-xl bg-white border border-slate-300 font-mono text-xs text-slate-900 overflow-x-auto whitespace-pre-wrap shadow-inner">$1</pre>');
+            safe = safe.replace(/\n/g, '<br>');
+            return safe;
+        }
+
+        function sendQuickPrompt(promptText) {
+            const input = document.getElementById('ai-input');
+            input.value = promptText;
+            handleAiSubmit(new Event('submit'));
+        }
+
+        async function handleAiSubmit(e) {
+            e.preventDefault();
+            const input = document.getElementById('ai-input');
+            const sendBtn = document.getElementById('ai-send-btn');
+            const userText = input.value.trim();
+            if (!userText) return;
+
+            state.aiMessages.push({ role: 'user', text: userText });
+            saveToStorage(STORAGE_KEYS.AI_CHAT, state.aiMessages);
+            input.value = '';
+            renderAiMessages();
+
+            const container = document.getElementById('ai-messages');
+            const typingId = 'typing-' + Date.now();
+            const typingDiv = document.createElement('div');
+            typingDiv.id = typingId;
+            typingDiv.className = 'flex items-start gap-2.5';
+            typingDiv.innerHTML = `
+                <div class="w-8 h-8 rounded-xl bg-pink-100 border border-pink-200 flex items-center justify-center shrink-0">
+                    <i data-lucide="bot" class="w-4 h-4 text-pink-600"></i>
+                </div>
+                <div class="rounded-2xl rounded-tl-sm px-4 py-3 bg-slate-50 border border-slate-200 flex items-center gap-1.5">
+                    <span class="w-2 h-2 rounded-full bg-pink-500 typing-dot"></span>
+                    <span class="w-2 h-2 rounded-full bg-pink-500 typing-dot"></span>
+                    <span class="w-2 h-2 rounded-full bg-pink-500 typing-dot"></span>
+                </div>
+            `;
+            container.appendChild(typingDiv);
+            container.scrollTop = container.scrollHeight;
+            lucide.createIcons();
+
+            sendBtn.disabled = true;
+            sendBtn.classList.add('opacity-60');
+
+            try {
+                const reply = await fetchGeminiResponse(userText);
+                document.getElementById(typingId)?.remove();
+                state.aiMessages.push({ role: 'assistant', text: reply });
+                saveToStorage(STORAGE_KEYS.AI_CHAT, state.aiMessages);
+                renderAiMessages();
+            } catch (err) {
+                document.getElementById(typingId)?.remove();
+                const fallbackReply = getOfflineFallbackReply(userText);
+                state.aiMessages.push({ role: 'assistant', text: fallbackReply });
+                saveToStorage(STORAGE_KEYS.AI_CHAT, state.aiMessages);
+                renderAiMessages();
+            } finally {
+                sendBtn.disabled = false;
+                sendBtn.classList.remove('opacity-60');
+            }
+        }
+
+        async function fetchGeminiResponse(userQuery) {
+            const apiKey = "";
+            const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-3-flash-preview:generateContent?key=${apiKey}`;
+
+            const systemPrompt = `Ти — «Розумний помічник майбутнього», інтелектуальний електронний асистент секретаря та діловода в Україні (учнівський STEM-проєкт).
+Відповідай українською мовою, структуровано, доброзичливо та лаконічно.
+Орієнтуйся на стандарт ДСТУ 4163:2020 та обов'язково використовуй правильний кличний відмінок у звертаннях («Шановний пане Ігоре!», «Шановна Олено Петрівно!»).
+Якщо користувач просить скласти документ, надай готовий акуратний шаблон у блоці коду \`\`\`...\`\`\`.`;
+
+            const payload = {
+                contents: [{ parts: [{ text: userQuery }] }],
+                systemInstruction: {
+                    parts: [{ text: systemPrompt }]
+                }
+            };
+
+            const delays = [1000, 2000, 4000];
+            for (let attempt = 0; attempt <= delays.length; attempt++) {
+                try {
+                    const response = await fetch(apiUrl, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify(payload)
+                    });
+                    if (!response.ok) throw new Error(`HTTP ${response.status}`);
+                    const result = await response.json();
+                    const text = result?.candidates?.[0]?.content?.parts?.[0]?.text;
+                    if (text) return text;
+                    throw new Error('Empty response');
+                } catch (error) {
+                    if (attempt === delays.length) throw error;
+                    await new Promise(res => setTimeout(res, delays[attempt]));
+                }
+            }
+        }
+
+        function getOfflineFallbackReply(query) {
+            const q = query.toLowerCase();
+            if (q.includes('наказ')) {
+                return 'Згідно з **ДСТУ 4163:2020**, наказ має містити: назву організації, назву виду документа (**НАКАЗ**), дату (без літери «р.»), реєстраційний номер, заголовок до тексту («Про...»), констатуючу частину, слово **НАКАЗУЮ:**, пункти та підпис керівника. Готовий зразок є у вкладці **«Документи»**.';
+            }
+            if (q.includes('кличн') || q.includes('звернут')) {
+                return 'В українському діловодстві звертання ставляться у **кличному відмінку**:\n• **Шановний пане Ігоре!**\n• **Шановна пані Олено!**\n• **Шановний Сергію Васильовичу!**\n• **Шановна Олено Ігорівно!**';
+            }
+            if (q.includes('протокол')) {
+                return 'Обов’язкові реквізити протоколу за **ДСТУ 4163:2020**:\n1. Назва установи та назва виду документа (**ПРОТОКОЛ**).\n2. Дата та номер засідання.\n3. **Голова**, **Секретар**, **Присутні**.\n4. **ПОРЯДОК ДЕННИЙ**.\n5. Основна частина: **СЛУХАЛИ — ВИСТУПИЛИ — ВИРІШИЛИ**.\n6. Підписи голови та секретаря.';
+            }
+            return 'Дякую за запитання! Раджу перевірити реквізити документа за **ДСТУ 4163:2020** (поля 30/15/20/20 мм, шрифт Times New Roman 12–14 пт) та звернути увагу на звертання у кличному відмінку. Також ви можете завантажити власний файл у розділі **«Документи»**.';
+        }
+
+        function clearAiChat() {
+            state.aiMessages = [
+                {
+                    role: 'assistant',
+                    text: 'Історію чату очищено. Я готовий до нових запитань щодо діловодства, документів та мовного етикету!'
+                }
+            ];
+            saveToStorage(STORAGE_KEYS.AI_CHAT, state.aiMessages);
+            renderAiMessages();
+            showToast('Чат очищено');
+        }
+
+        // ---------------------------------------------------------
+        // 10. ДОПОМІЖНІ ФУНКЦІЇ, МОДАЛЬНЕ ВІКНО ТА ЕКСПОРТ
+        // ---------------------------------------------------------
+        function openProjectModal() {
+            const modal = document.getElementById('project-modal');
+            modal.classList.remove('hidden');
+            modal.classList.add('flex');
+        }
+
+        function closeProjectModal() {
+            const modal = document.getElementById('project-modal');
+            modal.classList.add('hidden');
+            modal.classList.remove('flex');
+        }
+
+        function exportAllData() {
+            const exportPayload = {
+                project: 'Розумний помічник майбутнього: Електронний асистент секретаря (STEM)',
+                exportedAt: new Date().toLocaleString('uk-UA'),
+                calendarEvents: state.events,
+                customDocumentsCount: state.customDocs.length,
+                favoriteHotkeys: state.favoriteHotkeys,
+                checklistProgress: state.checkedItems
+            };
+            const blob = new Blob([JSON.stringify(exportPayload, null, 2)], { type: 'application/json' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = 'stem-secretary-assistant-backup.json';
+            a.click();
+            URL.revokeObjectURL(url);
+            showToast('Резервну копію даних збережено');
+        }
+
+        function escapeHtml(str) {
+            if (!str) return '';
+            return str
+                .replace(/&/g, '&amp;')
+                .replace(/</g, '&lt;')
+                .replace(/>/g, '&gt;')
+                .replace(/"/g, '&quot;')
+                .replace(/'/g, '&#039;');
+        }
+
+        window.onload = function () {
+            loadFromStorage();
+            renderCalendar();
+            renderDocumentsModule();
+            renderHotkeys();
+            renderChecklist();
+            renderAiMessages();
+            lucide.createIcons();
+        };
+    </script>
+</body>
+</html>
